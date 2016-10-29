@@ -33,4 +33,5 @@ server379
 # Debug files
 *.dSYM/
 *.su
+*.log
 
