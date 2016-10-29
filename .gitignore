@@ -27,7 +27,10 @@
 *.i*86
 *.x86_64
 *.hex
+chat379
+server379
 
 # Debug files
 *.dSYM/
 *.su
+
