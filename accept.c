@@ -8,13 +8,15 @@
 #include <syslog.h>
 #include <pthread.h>
 #include <string.h>
+
 void* Accept(void* input)
 {
 	fprintf(f, "Accept thread started\n");
+    fflush(f);
 	struct sockaddr_in socketAddress;
 	struct sockaddr_in remoteSocketAddress;
 	socklen_t addrlen;
-	int listener;
+    int listener;
 	int maxFD;
 	unsigned char write_buf[256];
 	unsigned char read_buf[256];
@@ -23,6 +25,7 @@ void* Accept(void* input)
 	int j=0;
 	int write_buf_itr =0;
 	int read_buf_itr =0;
+    fd_set copy_master;
 
 	//Set up listener socket
 	listener = socket(AF_INET, SOCK_STREAM, 0);
@@ -36,7 +39,6 @@ void* Accept(void* input)
     	exit(-1);
     }else{
     	printf("Binding successful. Opened socket on port: %d\n",MY_PORT);
-    	fflush(stdout);
     }
     maxFD = listener;
     
@@ -48,20 +50,18 @@ void* Accept(void* input)
 
     while(1){
     	//Re initialize all buffer handlers
+        copy_master = master;
     	memset(&write_buf,0,256);
     	memset(&read_buf,0,256);
     	write_buf_itr =0;
     	read_buf_itr=0;
 
-    	if(select(listener+1,&master,NULL,NULL,NULL) == -1){
+    	if(select(listener+1,&copy_master,NULL,NULL,NULL) == -1){
     		exit(-1);
     	}
     	
-    	fflush(stdout);
-
-    	if(FD_ISSET(listener,&master)){ //Todo: use copy
+    	if(FD_ISSET(listener,&copy_master)){ //Todo: use copy
     		printf("Detected connection\n");
-    		fflush(stdout);
     		addrlen = sizeof remoteSocketAddress;
     		int new_socket = accept(listener,(struct sockaddr *)&remoteSocketAddress,&addrlen);
     		FD_SET(new_socket,&master);
@@ -71,7 +71,6 @@ void* Accept(void* input)
     		printf("New connection from %d:%d on socket %d\n",
                             inet_ntoa(remoteSocketAddress.sin_addr),
                         	ntohs(remoteSocketAddress.sin_port), new_socket);
-    		fflush(stdout);
     		
     		write_buf[write_buf_itr++] = 0xCF;
     		write_buf[write_buf_itr++] = 0xA7;
@@ -104,7 +103,7 @@ void* Accept(void* input)
     		new_client.socket_id = new_socket;
     		clients[client_count] = new_client;
     		client_count++;
-    		printf("A new client joined: %s\n", new_client.name);
+    		printf("A new client joined: %s, ID: %d\n", new_client.name,new_socket);
     	}
 	}
 

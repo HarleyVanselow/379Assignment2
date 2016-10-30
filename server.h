@@ -21,5 +21,7 @@ extern FILE *f;
 extern int MY_PORT;
 extern fd_set master;
 extern short client_count;
+
 void* Accept(void* input);
 void* Recieve(void* input);
+void* Send(void* input);
