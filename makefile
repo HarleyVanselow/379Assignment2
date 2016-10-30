@@ -1,6 +1,6 @@
 make:
 	rm -f *.log
-	gcc -pthread -o server379 server.c
+	gcc -pthread -o server379 accept.c server.c 
 	gcc client.c -o chat379
 clean:
 	rm server379

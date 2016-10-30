@@ -18,6 +18,8 @@ int main()
 {
 	int	s, number;
 
+	unsigned char buf[256];
+
 	struct	sockaddr_in	server;
 
 	struct	hostent		*host;
@@ -47,11 +49,15 @@ int main()
 			perror ("Client: cannot connect to server");
 			exit (1);
 		}
-
-		read (s, &number, sizeof (number));
-		close (s);
-		fprintf (stderr, "Process %d gets number %d\n", getpid (),
-			ntohl (number));
-		sleep (5);
+		while(1){
+			int buf_size =read (s, &buf, 256);
+			int i;
+			for(i=0;i<buf_size;i++){
+				printf("%0x\n",buf[i]);
+				fflush(stdout);	
+			}
+			
+			return;
+		}
 	}
 }
