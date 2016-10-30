@@ -8,7 +8,7 @@
 #include <syslog.h>
 #include <pthread.h>
 #include <string.h>
-
+    int maxFD;
 void* Accept(void* input)
 {
 	fprintf(f, "Accept thread started\n");
@@ -17,7 +17,6 @@ void* Accept(void* input)
 	struct sockaddr_in remoteSocketAddress;
 	socklen_t addrlen;
     int listener;
-	int maxFD;
 	unsigned char write_buf[256];
 	unsigned char read_buf[256];
 	int nbytes =0;
@@ -56,7 +55,7 @@ void* Accept(void* input)
     	write_buf_itr =0;
     	read_buf_itr=0;
 
-    	if(select(listener+1,&copy_master,NULL,NULL,NULL) == -1){
+    	if(select(maxFD+1,&copy_master,NULL,NULL,NULL) == -1){
     		exit(-1);
     	}
     	
@@ -99,7 +98,7 @@ void* Accept(void* input)
     		while(read_buf_itr++<buf_size){
     			new_client.name[write_buf_itr++] = read_buf[read_buf_itr];
     		}
-    		new_client.name[write_buf_itr] = '\0'; //Might be unneccessary?
+    		new_client.name[write_buf_itr] = '\0';
     		new_client.socket_id = new_socket;
     		clients[client_count] = new_client;
     		client_count++;

@@ -13,13 +13,14 @@ struct client
 {
 	int socket_id;
 	unsigned char name[256];
-	unsigned char buf[256];	
+	unsigned char buf[65535]; //Can hold largest possible message	
 }clients[50];
 #endif
 
 extern FILE *f;
 extern int MY_PORT;
 extern fd_set master;
+extern maxFD;
 extern short client_count;
 
 void* Accept(void* input);
