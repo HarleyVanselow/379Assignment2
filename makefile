@@ -1,9 +1,15 @@
-make:
+all: server client
 	rm -f *.log
-	gcc -pthread -o server379 accept.c server.c recieve.c send.c
+
+server: 	
+	gcc -pthread server.c  accept.c  recieve.c send.c -o server379
+
+client:
 	gcc client.c -o chat379
+	
 clean:
 	rm server379
 	rm chat379
+
 server379:
 	./server379

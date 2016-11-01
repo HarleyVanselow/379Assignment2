@@ -16,6 +16,11 @@ short client_count=0;
 int main(int argc, char const *argv[])
 {
 	// daemon(1,1);
+
+	if (argc != 2){
+		printf("Must specify port number\n");
+		return -1;
+	}
 	printf("Started server\n");
 	sscanf(argv[1],"%d",&MY_PORT);
 	char filename[30];
