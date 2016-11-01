@@ -99,8 +99,8 @@ int main(int argc, char const *argv[])
 			printf("Enter message: "); fflush(stdout);
 			fgets(message, 256, stdin);
 			if (strcmp(".quit\n\0", message) == 0){
-				server.close();
-				server.shutdown();
+				// server.close();
+				// server.shutdown();
 				exit(1);
 			} else {
 				printf("Sending: %s", message); fflush(stdout);
