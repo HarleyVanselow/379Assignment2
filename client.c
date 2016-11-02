@@ -10,9 +10,10 @@
 #include <syslog.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 
 int number_of_connected_users;
-
+int client_socket; 
 void * check_connection(unsigned char * buf){
     if (buf[0] == 207 && buf[1] == 167){
         printf("Connection Established!\n");
@@ -51,42 +52,55 @@ void * send_username(void * client_socket, const char * username){
     snprintf(message_to_send, sizeof message_to_send, "%d%s", strlen(username), username);
     printf("Your Username: %s\n",message_to_send );
         send(*((int *)client_socket),message_to_send,256,0);//Shouldnt really be 256
+}
+
+void close_client(int sig){
+    printf("Closing client\n");fflush(stdout);
+    close(client_socket);
+    shutdown(client_socket, 2);
+    exit(1);
+}
+ 
+
+int main(int argc, char const *argv[]){
+    if (argc != 4){
+        printf("Invalid parameters!\n");
+        return -1;
     }
 
-    int main(int argc, char const *argv[])
-    {
-        if (argc != 4){
-            printf("Invalid parameters!\n");
-            return -1;
-        }
+    const char * hostname = argv[1];
+    int port_number = atoi(argv[2]);
+    const char * username = argv[3];
 
-        const char * hostname = argv[1];
-        int port_number = atoi(argv[2]);
-        const char * username = argv[3];
+    struct sigaction onSigInt;
+    onSigInt.sa_handler = close_client;
+    sigemptyset(&onSigInt.sa_mask);
+    onSigInt.sa_flags = 1;
 
-        int client_socket; 
-        uint32_t number;
+    sigaction(SIGINT, &onSigInt, NULL);
 
-        unsigned char buf[256];
+    uint32_t number;
 
-        struct  sockaddr_in server;
+    unsigned char buf[256];
 
-        struct  hostent     *host;
+    struct  sockaddr_in server;
 
-        TAILQ_HEAD(tailhead, entry) head;
-        struct tailhead *headp;                
-        struct entry {
-         TAILQ_ENTRY(entry) entries;        
-     } *n1, *n2, *np;
+    struct  hostent     *host;
 
-     TAILQ_INIT(&head);    
+    TAILQ_HEAD(tailhead, entry) head;
+    struct tailhead *headp;                
+    struct entry {
+       TAILQ_ENTRY(entry) entries;        
+    } *n1, *n2, *np;
+
+   TAILQ_INIT(&head);    
 
 
-     host = gethostbyname (hostname);
+   host = gethostbyname (hostname);
 
-     if (host == NULL) {
-        perror ("Client: cannot get host description");
-        exit (1);
+   if (host == NULL) {
+    perror ("Client: cannot get host description");
+    exit (1);
     }
 
 
@@ -139,10 +153,10 @@ void * send_username(void * client_socket, const char * username){
             if (buf[i] == '\0'){
                 printf(":");
             } else {
-             printf("%c", buf[i]);
-         }
-         fflush(stdout);
-         i ++;
-     } 
- }
+               printf("%c", buf[i]);
+           }
+           fflush(stdout);
+           i ++;
+       } 
+   }
 }
