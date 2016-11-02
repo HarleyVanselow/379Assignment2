@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -28,14 +29,12 @@ void * read_user_input(void * client_socket){
     char message[255];
 
     while(1){
-            
-        // This is blocking -> should make this non-blocking
-        printf("Enter message: "); fflush(stdout);
-        fgets(message, 255, stdin);
 
+        // This is blocking -> should make this non-blocking
+        fgets(message, 255, stdin);
         char message_to_send[256];
-        snprintf(message_to_send, sizeof message_to_send, "%d%s", strlen(message), message);
-        printf("sending message: %s\n", message_to_send);
+        snprintf(message_to_send, sizeof message_to_send, "%d%s", htons(strlen(message)), message);
+        // printf("sending message: %s\n", message_to_send);
         if (strcmp(".quit\n\0", message) == 0){
             exit(1);
         } else {
@@ -47,42 +46,45 @@ void * read_user_input(void * client_socket){
     }
 }
 
-void should_quit(char * command){
-    fflush(stdout);
-    if (command == ".quit"){
-        exit(1);
-    }
-}
-
 void * send_username(void * client_socket, const char * username){
-        char message_to_send[256];
-        snprintf(message_to_send, sizeof message_to_send, "%d%s", strlen(username), username);
+    char message_to_send[256];
+    snprintf(message_to_send, sizeof message_to_send, "%d%s", strlen(username), username);
+    printf("Your Username: %s\n",message_to_send );
         send(*((int *)client_socket),message_to_send,256,0);//Shouldnt really be 256
-}
-
-int main(int argc, char const *argv[])
-{
-    if (argc != 4){
-        printf("Invalid parameters!\n");
-        return -1;
     }
 
-    const char * hostname = argv[1];
-    int port_number = atoi(argv[2]);
-    const char * username = argv[3];
+    int main(int argc, char const *argv[])
+    {
+        if (argc != 4){
+            printf("Invalid parameters!\n");
+            return -1;
+        }
 
-    int client_socket; 
-    uint32_t number;
+        const char * hostname = argv[1];
+        int port_number = atoi(argv[2]);
+        const char * username = argv[3];
 
-    unsigned char buf[256];
+        int client_socket; 
+        uint32_t number;
 
-    struct  sockaddr_in server;
+        unsigned char buf[256];
 
-    struct  hostent     *host;
+        struct  sockaddr_in server;
 
-    host = gethostbyname (hostname);
+        struct  hostent     *host;
 
-    if (host == NULL) {
+        TAILQ_HEAD(tailhead, entry) head;
+        struct tailhead *headp;                
+        struct entry {
+         TAILQ_ENTRY(entry) entries;        
+     } *n1, *n2, *np;
+
+     TAILQ_INIT(&head);    
+
+
+     host = gethostbyname (hostname);
+
+     if (host == NULL) {
         perror ("Client: cannot get host description");
         exit (1);
     }
@@ -105,14 +107,22 @@ int main(int argc, char const *argv[])
         exit (1);
     }
 
-    read (client_socket, &buf, 256);
+    read (client_socket, &buf, 2);
     check_connection(buf);
-    
-    number_of_connected_users = buf[2];
+    uint16_t number_of_connected_users;
+    read (client_socket, &number_of_connected_users, 2);
     printf("There are already %d users connected!\n", number_of_connected_users);
-    printf("Type .quit to quit the chat\n");
     fflush(stdout);
-        // Now get the list of usernames 
+    // Now get the list of usernames 
+    int counter = 0;
+    for (counter; counter < number_of_connected_users; counter++){
+        read(client_socket, &buf, 1);
+        int username_length = buf[0];
+        char current_username[username_length];
+        read(client_socket, &current_username, username_length);
+        current_username[username_length] = '\0';
+        printf("%s\n", current_username); fflush(stdout);
+    } 
     
     // send username
     send_username(&client_socket, username);
@@ -124,14 +134,15 @@ int main(int argc, char const *argv[])
     while (1){
 
         int message_size = read (client_socket, &buf, 256);
-        int i = 0;
-        for (i; i < message_size; i ++){
+        int i = 2;
+        while (i < message_size){
             if (buf[i] == '\0'){
-                printf("\n");
+                printf(":");
             } else {
-               printf("%c", buf[i]);
-            }
-            fflush(stdout);
-        }
-    }
+             printf("%c", buf[i]);
+         }
+         fflush(stdout);
+         i ++;
+     } 
+ }
 }
