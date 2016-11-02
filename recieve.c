@@ -1,4 +1,27 @@
 #include "server.h"
+void terminate(int i)
+{
+	int j;
+	printf("Connection terminated\n");
+	close(clients[i].socket_id);
+	if(i+1 == client_count){//Is end element
+		client_count--; //Just pretend it's not there, it will be overwritten next time
+		printf("Is end element\n");
+	}else{
+
+		for(j=i;j<client_count-1;j++){
+			clients[j] = clients[j+1];
+		}
+		client_count--;	
+	}
+
+	for(j=0;j<client_count;j++){ // Update new maxFD
+		if(clients[j].socket_id>maxFD){
+			maxFD=clients[j].socket_id; 
+		}
+	}
+	FD_CLR(clients[i].socket_id,&master);
+}
 void* Recieve(void* input)
 {
 	fprintf(f,"Recieving thread started\n");
@@ -23,26 +46,9 @@ void* Recieve(void* input)
 		for(i = 0;i<client_count;i++){
 			int client_id = clients[i].socket_id; // Todo: mutex
 			if(FD_ISSET(client_id,&copy_master)){
-				fflush(stdout);
 				size_recieved = read(client_id,&buf,65535 );
 				if(size_recieved == 0){
-					printf("Connection terminated\n");
-					close(clients[i].socket_id);
-					if(i+1 == client_count){//Is end element
-						client_count--; //Just pretend it's not there, it will be overwritten next time
-						printf("Is end element\n");
-					}else{
-						for(j=i;j<client_count-1;j++){
-							clients[j] = clients[j+1];
-						}
-						client_count--;	
-					}
-					for(j=0;j<client_count;j++){ // Update new maxFD
-						if(clients[j].socket_id>maxFD){
-							maxFD=clients[j].socket_id; 
-						}
-					}
-					FD_CLR(clients[i].socket_id,&master);
+					terminate(i);
 					continue;
 				}
 				int message_length = (buf[0] & 0xFF)+(buf[1] >> 8);
