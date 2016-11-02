@@ -147,7 +147,7 @@ int main(int argc, char const *argv[]){
     while (1){
 
         read (client_socket, &message_type, 1);
-        if (message_type == 0){
+        if (message_type == 0) {
 
             read(client_socket, &username_length, 1);
             char sender_username[username_length];
@@ -160,6 +160,20 @@ int main(int argc, char const *argv[]){
             received_message[message_length] = '\0';
 
             printf("%s: %s\n", sender_username, received_message);
+            fflush(stdout);
+        } else if (message_type == 1) {
+            read(client_socket, &username_length, 1);
+            char updated_username[username_length];
+            read(client_socket, &updated_username, username_length);
+            updated_username[username_length] = '\0';
+            printf("%s has joined the chat\n", updated_username);
+            fflush(stdout);
+        } else if (message_type == 2) {
+            read(client_socket, &username_length, 1);
+            char updated_username[username_length];
+            read(client_socket, &updated_username, username_length);
+            updated_username[username_length] = '\0';
+            printf("%s has left the chat\n", updated_username);
             fflush(stdout);
         }
     }
