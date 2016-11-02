@@ -8,10 +8,11 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <string.h>
+#include <pthread.h>
 
 int number_of_connected_users;
 
-void check_connection(unsigned char * buf){
+void * check_connection(unsigned char * buf){
 	if (buf[0] == 207 && buf[1] == 167){
 		printf("Connection Established!\n");
 		fflush(stdout);	
@@ -22,6 +23,30 @@ void check_connection(unsigned char * buf){
 	}
 }
 
+void * connect_to_server(){
+
+}
+
+void * read_user_input(void * client_socket){
+
+	char message[256];
+
+	while(1){
+			
+		// This is blocking -> should make this non-blocking
+		printf("Enter message: "); fflush(stdout);
+		fgets(message, 256, stdin);
+		if (strcmp(".quit\n\0", message) == 0){
+			exit(1);
+		} else {
+			printf("Sending: %s", message); fflush(stdout);
+			send(*((int *)client_socket),message,256,0);//Shouldnt really be 256
+			memset(message,0,256);
+		}
+
+	}
+}
+
 void should_quit(char * command){
 	printf("%s", command);
 	fflush(stdout);
@@ -29,6 +54,7 @@ void should_quit(char * command){
 		exit(1);
 	}
 }
+
 int main(int argc, char const *argv[])
 {
 	if (argc != 4){
@@ -40,9 +66,8 @@ int main(int argc, char const *argv[])
 	int port_number = atoi(argv[2]);
 	const char * username = argv[3];
 
-	char message[256];
-
-	int	client_socket, number;
+	int client_socket; 
+	uint32_t number;
 
 	unsigned char buf[256];
 
@@ -57,41 +82,38 @@ int main(int argc, char const *argv[])
 		exit (1);
 	}
 
-	while (1) {
 
-		client_socket = socket (AF_INET, SOCK_STREAM, 0);
+	client_socket = socket (AF_INET, SOCK_STREAM, 0);
 
-		if (client_socket < 0) {
-			perror ("Client: cannot open socket");
-			exit (1);
-		}
+	if (client_socket < 0) {
+		perror ("Client: cannot open socket");
+		exit (1);
+	}
 
-		bzero (&server, sizeof (server));
-		bcopy (host->h_addr, & (server.sin_addr), host->h_length);
-		server.sin_family = host->h_addrtype;
-		server.sin_port = htons (port_number);
+	bzero (&server, sizeof (server));
+	bcopy (host->h_addr, & (server.sin_addr), host->h_length);
+	server.sin_family = host->h_addrtype;
+	server.sin_port = htons (port_number);
 
-		if (connect (client_socket, (struct sockaddr*) & server, sizeof (server))) {
-			perror ("Client: cannot connect to server");
-			exit (1);
-		}
+	if (connect (client_socket, (struct sockaddr*) & server, sizeof (server))) {
+		perror ("Client: cannot connect to server");
+		exit (1);
+	}
 
-		read (client_socket, &buf, 256);
-		check_connection(buf);
-		
-		number_of_connected_users = buf[2];
-		printf("There are already %d users connected!\n", number_of_connected_users);
-		printf("Type .quit to quit the chat\n");
-		fflush(stdout);
-			// Now get the list of usernames 
-		
-		while(1){
-		
+	read (client_socket, &buf, 256);
+	check_connection(buf);
+	
+	number_of_connected_users = buf[2];
+	printf("There are already %d users connected!\n", number_of_connected_users);
+	printf("Type .quit to quit the chat\n");
+	fflush(stdout);
+		// Now get the list of usernames 
+	
+	pthread_t user_input;
+	
+	pthread_create(&user_input, NULL, read_user_input, &client_socket);
 
-			// setup handling of receiving chat messages from the server
-			
 
-			// setup handling of getting user-update messages from the server
 
 			
 			// This is blocking -> should make this non-blocking
@@ -110,3 +132,4 @@ int main(int argc, char const *argv[])
 		}
 	}
 }
+
