@@ -9,7 +9,7 @@ void* Recieve(void* input)
 		int read_buf_itr=0;
 		int write_buf_itr=0;
 		copy_master = master;
-		int i;
+		int i,j;
 		unsigned char buf[65535];
 		int size_recieved;
 		struct timeval timeoutConfig;
@@ -27,6 +27,18 @@ void* Recieve(void* input)
 			if(FD_ISSET(client_id,&copy_master)){
 				fflush(stdout);
 				size_recieved = read(client_id,&buf,65535 );
+				if(size_recieved == 0){
+					printf("Connection terminated\n");
+					close(clients[i].socket_id);
+					
+					for(j=i;j<client_count-2;j++){
+					
+					clients[j] = clients[j+1];
+					}
+					client_count--;
+					
+					continue;
+				}
 				int message_length = (buf[0] & 0xFF)+(buf[1] >> 8);
 				if(message_length !=0 ){					
 					for(read_buf_itr=0;read_buf_itr<message_length;read_buf_itr++){
