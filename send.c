@@ -27,6 +27,22 @@ void send_client_buffer(int i)
 	}
 	memset(clients[i].buf,0,256);
 }
+void send_client_change_notice(char* name,int joined_or_left)
+{
+	unsigned char write_buf[256];
+	int write_buf_itr=0;
+	int j;
+	char name_length = strlen(name);
+	write_buf[write_buf_itr++] = joined_or_left;
+	write_buf[write_buf_itr++] = name_length;
+	for(j=0;j<name_length;j++){
+		write_buf[write_buf_itr++] = name[j];
+	}
+	for(j =0; j<client_count;j++){
+		send(clients[j].socket_id,write_buf,write_buf_itr,0);
+	}	
+}
+
 void* Send(void* input)
 {
 	fprintf(f,"Sending thread started\n");
