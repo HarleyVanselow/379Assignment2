@@ -27,9 +27,8 @@ void* Recieve(void* input)
 			if(FD_ISSET(client_id,&copy_master)){
 				fflush(stdout);
 				size_recieved = read(client_id,&buf,65535 );
-				int message_length = (buf[0] & 0xF)+(buf[1] >> 4);
+				int message_length = (buf[0] & 0xFF)+(buf[1] >> 8);
 				if(message_length !=0 ){					
-					//memset(clients[i].buf,0,256); //clear buffer
 					for(read_buf_itr=0;read_buf_itr<message_length;read_buf_itr++){
 						clients[i].buf[write_buf_itr++] = buf[read_buf_itr+2];
 					}
