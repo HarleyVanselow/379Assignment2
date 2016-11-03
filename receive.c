@@ -4,7 +4,6 @@
 void* Receive()
 {
 	fprintf(f,"Recieving thread started\n");
-	fflush(f);
 	fd_set copy_master;
 	unsigned char buf[65535];
 	int size_received;
@@ -22,8 +21,7 @@ void* Receive()
 		int select_result =select(maxFD+1,&copy_master,NULL,NULL,&timeoutConfig);
 		
 		if(select_result == -1){
-			printf("errno: %d\n",errno);
-			fprintf(f,"Select statement in receive thread failed");
+			fprintf(f,"Select statement in receive thread failed with errno: %d",errno);
 			exit(-1);
 		}
 		for(i = 0;i<client_count;i++){
@@ -31,7 +29,7 @@ void* Receive()
 				int client_id = clients[i].socket_id;
 	    	sem_post(&lock_client);
 			if(FD_ISSET(client_id,&copy_master)){
-				size_received = read(client_id,&buf,65535 );
+				size_received = read(client_id,&buf,65535);
 				if(size_received < 1){
 					terminate(i);
 					break;
@@ -42,9 +40,8 @@ void* Receive()
 						for(read_buf_itr=0;read_buf_itr<message_length;read_buf_itr++){
 							clients[i].buf[write_buf_itr++] = buf[read_buf_itr+2];
 						}
-							clients[i].buf[message_length+1] = '\0';
-							printf("Received %s from %s. Size received: %d\n",clients[i].buf,clients[i].name,size_received);
-							fflush(stdout);
+						clients[i].buf[message_length+1] = '\0';
+						fprintf(f,"Received %s from %s\n",clients[i].buf,clients[i].name);
 					}
 					clients[i].time_since_last_received=0;
 	    		sem_post(&lock_client);

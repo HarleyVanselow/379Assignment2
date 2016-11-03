@@ -24,7 +24,6 @@ void send_client_buffer(int i) //This method already has clients locked for it
 	}
 	
 	for(j=0;j<client_count;j++){
-		printf("Sending to: %d:%s\n",j,clients[j].name);
 		send(clients[j].socket_id,write_buf,write_buf_itr,0);	
 	}
 

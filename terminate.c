@@ -10,7 +10,7 @@ void terminate(int i)
 		FD_CLR(clients[i].socket_id,&master);
 	sem_post(&lock_master);
 
-	printf("%s terminated, notifying...\n",clients[i].name);
+	fprintf(f,"%s terminated, notifying other clients\n",clients[i].name);
 	send_client_change_notice(clients[i].name,2);
 	if(!(i+1 == client_count)){//Isn't end element
 		for(j=i;j<client_count-1;j++){
@@ -31,7 +31,7 @@ void terminate(int i)
 
 void terminate_server()
 {
-	printf("Sending exit signal\n");
+	fprintf(f,"Terminating server...\n");
 	fflush(stdout);
 	server_exit = 1;
 }

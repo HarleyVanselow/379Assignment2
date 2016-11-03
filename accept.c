@@ -28,7 +28,7 @@ void* Accept()
     	fprintf(f,"Error binding. Terminating...");
     	exit(-1);
     }else{
-    	printf("Binding successful. Opened socket on port: %d\n",MY_PORT);
+    	fprintf(f,"Binding successful. Opened socket on port: %d\n",MY_PORT);
     }
     maxFD = listener;
     
@@ -57,17 +57,13 @@ void* Accept()
     	}
     	
     	if(FD_ISSET(listener,&copy_master)){
-    		printf("Detected connection\n");
+    		fprintf(f,"Detected connection\n");
     		addrlen = sizeof remoteSocketAddress;
     		int new_socket = accept(listener,(struct sockaddr *)&remoteSocketAddress,&addrlen);
     		FD_SET(new_socket,&master);
     		if(new_socket>maxFD){
     			maxFD = new_socket;
-    		}
-    		printf("New connection from %d:%d on socket %d\n",
-                            inet_ntoa(remoteSocketAddress.sin_addr),
-                        	ntohs(remoteSocketAddress.sin_port), new_socket);
-    		
+    		}   		
     		write_buf[write_buf_itr++] = 0xCF;
     		write_buf[write_buf_itr++] = 0xA7;
     		write_buf[write_buf_itr++] = client_count & 0xFF;
@@ -105,7 +101,7 @@ void* Accept()
 				clients[client_count] = new_client;
 				client_count++;
 	    	sem_post(&lock_client);
-    		printf("A new client joined: %s, ID: %d\n", new_client.name,new_socket);
+    		fprintf(f,"A new client joined: %s, ID: %d\n", new_client.name,new_socket);
     	}
 	}
 }
