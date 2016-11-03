@@ -11,9 +11,11 @@
 #include <string.h>
 #include <pthread.h>
 #include <signal.h>
+#include <inttypes.h>
 
 int number_of_connected_users;
-int client_socket; 
+int client_socket;
+
 void * check_connection(unsigned char * buf){
     if (buf[0] == 207 && buf[1] == 167){
         printf("Connection Established!\n");
@@ -30,20 +32,64 @@ void * read_user_input(void * client_socket){
     char message[255];
 
     while(1){
-
         // This is blocking -> should make this non-blocking
         fgets(message, 255, stdin);
         char message_to_send[256];
-        snprintf(message_to_send, sizeof message_to_send, "%d%s", htons(strlen(message)), message);
+        uint16_t message_length= strlen(message);
+        snprintf(message_to_send, sizeof message_to_send, "%c%c%s", message_length & 0xFF, message_length >> 8, message);
         // printf("sending message: %s\n", message_to_send);
-        if (strcmp(".quit\n\0", message) == 0){
-            exit(1);
-        } else {
-            printf("Sending: %s", message_to_send); fflush(stdout);
-            send(*((int *)client_socket),message_to_send,256,0);//Shouldnt really be 256
-            memset(message_to_send,0,256);
-        }
 
+        // printf("Sending: %s", message_to_send); fflush(stdout);
+        send(*((int *)client_socket),message_to_send,256,0);//Shouldnt really be 256
+        memset(message_to_send,0,256);
+    }
+}
+
+
+void * received_messages(void * client_socket){
+    unsigned char message_type;
+    int username_length;
+    uint16_t message_length;
+    char buf[256];
+    while (1){
+
+        //wait until we get something
+        while (read (*((int *)client_socket), &message_type, 1) == 0){
+        }
+            // printf("message_type: %c\n", message_type); fflush(stdout);
+            if (message_type == 0x00) {
+
+                read(*((int *)client_socket), &username_length, 1);
+                char sender_username[username_length];
+                read(*((int *)client_socket), &sender_username, username_length);
+                sender_username[username_length] = '\0';
+
+                read(*((int *)client_socket), &message_length, 2);
+                char received_message[message_length];
+                read(*((int *)client_socket), &received_message, message_length);
+                received_message[message_length] = '\0';
+
+                printf("%s: %s\n", sender_username, received_message);
+                fflush(stdout);
+            } else if (message_type == 0x01) {
+                read(*((int *)client_socket), &username_length, 1);
+                char updated_username[username_length];
+                read(*((int *)client_socket), &updated_username, username_length);
+                updated_username[username_length] = '\0';
+                printf("%s has joined the chat\n", updated_username);
+                fflush(stdout);
+            } else if (message_type == 0x02) {
+                read(*((int *)client_socket), &username_length, 1);
+                char updated_username[username_length];
+                read(*((int *)client_socket), &updated_username, username_length);
+                updated_username[username_length] = '\0';
+                printf("%s has left the chat\n", updated_username);
+                fflush(stdout);
+            }
+            message_type = 0;
+            username_length = 0;
+            message_length = 0;
+        
     }
 }
 
@@ -145,18 +191,23 @@ int main(int argc, char const *argv[]){
     pthread_t user_input;
     pthread_create(&user_input, NULL, read_user_input, &client_socket);
 
-    while (1){
+    pthread_t received_message;
+    pthread_create(&received_message, NULL, received_messages, &client_socket);
 
-        int message_size = read (client_socket, &buf, 256);
-        int i = 2;
-        while (i < message_size){
-            if (buf[i] == '\0'){
-                printf(":");
-            } else {
-               printf("%c", buf[i]);
-           }
-           fflush(stdout);
-           i ++;
-       } 
-   }
+    read (client_socket, &buf, 256);
+    while(1);
+   //  while (1){
+
+   //      int message_size = read (client_socket, &buf, 256);
+   //      int i = 2;
+   //      while (i < message_size){
+   //          if (buf[i] == '\0'){
+   //              printf(":");
+   //          } else {
+   //             printf("%c", buf[i]);
+   //         }
+   //         fflush(stdout);
+   //         i ++;
+   //     } 
+   // }
 }
