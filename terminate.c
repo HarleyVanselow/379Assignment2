@@ -27,7 +27,11 @@ void terminate(int i)
 		}
 	}
 	sem_post(&lock_master);
-	
-	
-	
+}
+
+void terminate_server()
+{
+	printf("Sending exit signal\n");
+	fflush(stdout);
+	server_exit = 1;
 }

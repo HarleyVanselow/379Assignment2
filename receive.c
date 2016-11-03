@@ -11,6 +11,8 @@ void* Receive()
 	struct timeval timeoutConfig;
 	int i,j;
 	while(1){
+		if(server_exit){pthread_exit(NULL);}
+		memset(buf,0,65535);
 		int read_buf_itr=0;
 		int write_buf_itr=0;
 		copy_master = master;

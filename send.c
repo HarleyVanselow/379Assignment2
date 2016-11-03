@@ -54,6 +54,7 @@ void* Send()
 	fflush(f);
 	int i;
 	while(1){
+		if(server_exit){pthread_exit(NULL);}
 		for(i =0; i<client_count;i++){
 			sem_wait(&lock_client);
 				if(clients[i].buf[0] != 0){ //todo better check

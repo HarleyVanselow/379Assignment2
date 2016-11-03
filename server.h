@@ -7,6 +7,7 @@
 #include <syslog.h>
 #include <pthread.h>
 #include <string.h>
+#include <signal.h>
 #include <semaphore.h>
 #ifndef CLIENT
 #define CLIENT
@@ -26,10 +27,12 @@ extern maxFD;
 extern short client_count;
 extern sem_t lock_client;
 extern sem_t lock_master;
+extern int server_exit;
 
 void* Accept();
 void* Receive();
 void* Send();
-void* TimeoutCheck(int timeout);
+void* TimeoutCheck();
 void send_client_change_notice(char* name, int joined_or_left);
 void terminate(int client_number);
+void terminate_server();

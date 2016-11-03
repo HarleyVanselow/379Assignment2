@@ -37,8 +37,11 @@ void* Accept()
     }
 
     FD_SET(listener,&master); //Todo: mutex
-
+	struct timeval timeoutConfig;
+	timeoutConfig.tv_sec =0;
+	timeoutConfig.tv_usec =500;
     while(1){
+		if(server_exit){pthread_exit(NULL);}
     	//Re initialize all buffer handlers
 		sem_wait(&lock_master);
         	copy_master = master;
@@ -49,7 +52,7 @@ void* Accept()
     	write_buf_itr =0;
     	read_buf_itr=0;
 
-    	if(select(listener+1,&copy_master,NULL,NULL,NULL) == -1){
+    	if(select(listener+1,&copy_master,NULL,NULL,&timeoutConfig) == -1){
     		exit(-1);
     	}
     	
@@ -105,7 +108,4 @@ void* Accept()
     		printf("A new client joined: %s, ID: %d\n", new_client.name,new_socket);
     	}
 	}
-
-
-	return NULL;
 }
