@@ -1,26 +1,29 @@
 #include "server.h"
+#include <errno.h>
 void terminate(int i)
 {
 	int j;
 	printf("Connection terminated\n");
 	close(clients[i].socket_id);
-	if(i+1 == client_count){//Is end element
-		client_count--; //Just pretend it's not there, it will be overwritten next time
-		printf("Is end element\n");
-	}else{
+	send_client_change_notice(clients[i].name,2);
+	FD_CLR(clients[i].socket_id,&master);
 
+	
+	if(!(i+1 == client_count)){//Isn't end element
 		for(j=i;j<client_count-1;j++){
 			clients[j] = clients[j+1];
-		}
-		client_count--;	
+		} 
 	}
+	client_count--;
 
 	for(j=0;j<client_count;j++){ // Update new maxFD
 		if(clients[j].socket_id>maxFD){
 			maxFD=clients[j].socket_id; 
 		}
 	}
-	FD_CLR(clients[i].socket_id,&master);
+	
+	
+	
 }
 void* Recieve(void* input)
 {
@@ -37,9 +40,10 @@ void* Recieve(void* input)
 		copy_master = master;
 		timeoutConfig.tv_sec =0;
 		timeoutConfig.tv_usec =500;
-
+		
 		int select_result =select(maxFD+1,&copy_master,NULL,NULL,&timeoutConfig);
 		if(select_result == -1){
+			printf("errno: %d\n",errno);
 			fprintf(f,"Select statement in recieve thread failed");
 			exit(-1);
 		}
@@ -49,7 +53,7 @@ void* Recieve(void* input)
 				size_recieved = read(client_id,&buf,65535 );
 				if(size_recieved == 0){
 					terminate(i);
-					continue;
+					break;
 				}
 				int message_length = (buf[0] & 0xFF)+(buf[1] >> 8);
 				if(message_length !=0 ){					

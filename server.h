@@ -26,3 +26,4 @@ extern short client_count;
 void* Accept(void* input);
 void* Recieve(void* input);
 void* Send(void* input);
+void send_client_change_notice(char* name, int joined_or_left);

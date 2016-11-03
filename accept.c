@@ -101,6 +101,7 @@ void* Accept(void* input)
     		new_client.name[write_buf_itr] = '\0';
     		new_client.socket_id = new_socket;
     		clients[client_count] = new_client;
+			send_client_change_notice(new_client.name,1);
     		client_count++;
     		printf("A new client joined: %s, ID: %d\n", new_client.name,new_socket);
     	}
