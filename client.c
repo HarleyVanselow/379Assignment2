@@ -49,7 +49,7 @@ void * read_user_input(void * client_socket){
         // }
         
         if (strcmp(message, ".users\n") == 0){
-
+            printf("Current users: \n");
             for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next){
                 printf("%s\n", np->username);fflush(stdout);
             }
@@ -77,8 +77,7 @@ void * received_messages(void * client_socket){
     while (1){
 
         //wait until we get something
-        while (read (*((int *)client_socket), &message_type, 1) == 0){
-        }
+        read (*((int *)client_socket), &message_type, 1);
             // printf("message_type: %c\n", message_type); fflush(stdout);
         if (message_type == 0x00) {
 
@@ -96,18 +95,40 @@ void * received_messages(void * client_socket){
             fflush(stdout);
         } else if (message_type == 0x01) {
             read(*((int *)client_socket), &username_length, 1);
-            char updated_username[username_length];
-            read(*((int *)client_socket), &updated_username, username_length);
+            char * updated_username = malloc (username_length+1);
+            read(*((int *)client_socket), updated_username, username_length);
             updated_username[username_length] = '\0';
             printf("%s has joined the chat\n", updated_username);
             fflush(stdout);
+
+            entry * new_entry = (entry *)malloc(sizeof(struct entry));
+            // printf("5\n"); fflush(stdout);
+            new_entry->username = updated_username;
+            // printf("6\n"); fflush(stdout);
+
+            TAILQ_INSERT_TAIL(&head, new_entry, entries);
+            free(new_entry);
         } else if (message_type == 0x02) {
             read(*((int *)client_socket), &username_length, 1);
-            char updated_username[username_length];
-            read(*((int *)client_socket), &updated_username, username_length);
+            char * updated_username = malloc(username_length+1);
+            read(*((int *)client_socket), updated_username, username_length);
             updated_username[username_length] = '\0';
             printf("%s has left the chat\n", updated_username);
             fflush(stdout);
+
+            for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next){
+                // printf("%s\n", np->username);fflush(stdout);
+                if (strcmp(np->username, updated_username) == 0){
+                    TAILQ_REMOVE(&head, np, entries);
+                }
+            }
+            // entry * new_entry = (entry *)malloc(sizeof(struct entry));
+            // // printf("5\n"); fflush(stdout);
+            // new_entry->username = updated_username;
+            // // printf("6\n"); fflush(stdout);
+
+            // TAILQ_REMOVE(&head, new_entry, entries);
+            // free(new_entry);
         }
         message_type = 0;
         username_length = 0;
@@ -222,7 +243,7 @@ int main(int argc, char const *argv[]){
         send_username(&client_socket, username);
 
         send(client_socket,"0",1,0);//Shouldnt really be 256
-        read (client_socket, &buf, 256);
+        // read (client_socket, &buf, 256);
 
         pthread_t user_input;
         pthread_create(&user_input, NULL, read_user_input, &client_socket);
