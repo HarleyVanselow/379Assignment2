@@ -1,31 +1,7 @@
 #include "server.h"
 #include <errno.h>
-void terminate(int i)
-{
-	int j;
-	printf("Connection terminated\n");
-	close(clients[i].socket_id);
-	send_client_change_notice(clients[i].name,2);
-	FD_CLR(clients[i].socket_id,&master);
 
-	
-	if(!(i+1 == client_count)){//Isn't end element
-		for(j=i;j<client_count-1;j++){
-			clients[j] = clients[j+1];
-		} 
-	}
-	client_count--;
-
-	for(j=0;j<client_count;j++){ // Update new maxFD
-		if(clients[j].socket_id>maxFD){
-			maxFD=clients[j].socket_id; 
-		}
-	}
-	
-	
-	
-}
-void* Receive(void* input)
+void* Receive()
 {
 	fprintf(f,"Recieving thread started\n");
 	fflush(f);
@@ -63,9 +39,8 @@ void* Receive(void* input)
 						clients[i].buf[message_length+1] = '\0';
 						printf("%s: %s\n",clients[i].name,clients[i].buf);
 						fflush(stdout);
-				}else{ // Is a keep-alive message
-
 				}
+				clients[i].time_since_last_received=0;
 			}
 		}			
 	}

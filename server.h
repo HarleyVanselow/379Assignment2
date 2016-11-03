@@ -12,7 +12,7 @@
 struct client
 {
 	int socket_id;
-	int last_received;
+	int time_since_last_received;
 	unsigned char name[256];
 	unsigned char buf[65535]; //Can hold largest possible message	
 }clients[50];
@@ -24,8 +24,9 @@ extern fd_set master;
 extern maxFD;
 extern short client_count;
 
-void* Accept(void* input);
-void* Receive(void* input);
-void* Send(void* input);
-void* TimeoutCheck(void* input);
+void* Accept();
+void* Receive();
+void* Send();
+void* TimeoutCheck(int timeout);
 void send_client_change_notice(char* name, int joined_or_left);
+void terminate(int client_number);

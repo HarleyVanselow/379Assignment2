@@ -32,7 +32,7 @@ int main(int argc, char const *argv[])
 	pthread_create(&threads[0],NULL,Accept,NULL);
 	pthread_create(&threads[1],NULL,Receive,NULL);
 	pthread_create(&threads[2],NULL,Send,NULL);
-	pthread_create(&threads[3],NULL,TimeoutCheck,NULL);
+	pthread_create(&threads[3],NULL,TimeoutCheck(30),NULL);
 	pthread_join(threads[0],NULL);
 	
 

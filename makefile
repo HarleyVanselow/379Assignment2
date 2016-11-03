@@ -1,7 +1,7 @@
 all: server client
 	
 server:     
-	gcc -pthread server.c  accept.c  receive.c send.c timeout_check.c -o server379
+	gcc -pthread server.c  accept.c  receive.c send.c timeout_check.c terminate.c -o server379
 
 client:
 	gcc -pthread client.c -o chat379

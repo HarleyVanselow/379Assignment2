@@ -43,7 +43,7 @@ void send_client_change_notice(char* name,int joined_or_left)
 	}	
 }
 
-void* Send(void* input)
+void* Send()
 {
 	fprintf(f,"Sending thread started\n");
 	fflush(f);

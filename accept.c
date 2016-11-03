@@ -9,7 +9,7 @@
 #include <pthread.h>
 #include <string.h>
     int maxFD;
-void* Accept(void* input)
+void* Accept()
 {
 	fprintf(f, "Accept thread started\n");
     fflush(f);
