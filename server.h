@@ -7,6 +7,7 @@
 #include <syslog.h>
 #include <pthread.h>
 #include <string.h>
+#include <semaphore.h>
 #ifndef CLIENT
 #define CLIENT
 struct client
@@ -23,6 +24,8 @@ extern int MY_PORT;
 extern fd_set master;
 extern maxFD;
 extern short client_count;
+extern sem_t lock_client;
+extern sem_t lock_master;
 
 void* Accept();
 void* Receive();

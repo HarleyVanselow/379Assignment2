@@ -1,20 +1,15 @@
 #include "server.h"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <syslog.h>
-#include <pthread.h>
-#include <string.h>
 
 FILE *f;
 int MY_PORT;
 fd_set master;
 short client_count=0;
+sem_t lock_client;
+sem_t lock_master;
 int main(int argc, char const *argv[])
 {
+	sem_init(&lock_master,0,1);
+	sem_init(&lock_client,0,1);
 	// daemon(1,1);
 
 	if (argc != 2){
@@ -28,7 +23,7 @@ int main(int argc, char const *argv[])
 	f = fopen(filename,"a+");
 	fprintf(f, "Server started on port %s\n",argv[1] );
 	fflush(f);
-	pthread_t threads[3];
+	pthread_t threads[4];
 	pthread_create(&threads[0],NULL,Accept,NULL);
 	pthread_create(&threads[1],NULL,Receive,NULL);
 	pthread_create(&threads[2],NULL,Send,NULL);
@@ -37,7 +32,7 @@ int main(int argc, char const *argv[])
 	
 
  	fprintf(f, "Exited\n");
-	/* code */
+	
 	return 0;
 }
 

@@ -1,10 +1,12 @@
 #include "server.h"
-void send_client_buffer(int i)
+void send_client_buffer(int i) //This method already has clients locked for it
 {
 	unsigned char write_buf[256];
 	int write_buf_itr=0;
 	int read_buf_itr=0;
 	int j;
+	
+	
 	unsigned char sender_name_length = strlen(clients[i].name);
 	short message_length = strlen(clients[i].buf);
 
@@ -25,6 +27,7 @@ void send_client_buffer(int i)
 		printf("Sending to: %d:%s\n",j,clients[j].name);
 		send(clients[j].socket_id,write_buf,write_buf_itr,0);	
 	}
+
 	memset(clients[i].buf,0,256);
 }
 void send_client_change_notice(char* name,int joined_or_left)
@@ -38,9 +41,11 @@ void send_client_change_notice(char* name,int joined_or_left)
 	for(j=0;j<name_length;j++){
 		write_buf[write_buf_itr++] = name[j];
 	}
-	for(j =0; j<client_count;j++){
-		send(clients[j].socket_id,write_buf,write_buf_itr,0);
-	}	
+	sem_wait(&lock_client);
+		for(j =0; j<client_count;j++){
+			send(clients[j].socket_id,write_buf,write_buf_itr,0);
+		}	
+	sem_post(&lock_client);
 }
 
 void* Send()
@@ -50,9 +55,11 @@ void* Send()
 	int i;
 	while(1){
 		for(i =0; i<client_count;i++){
-			if(clients[i].buf[0] != 0){
-				send_client_buffer(i);
-			}
+			sem_wait(&lock_client);
+				if(clients[i].buf[0] != 0){
+					send_client_buffer(i);
+				}
+	    	sem_post(&lock_client);
 		}			
 		
 	}

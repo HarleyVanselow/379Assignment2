@@ -1,13 +1,4 @@
 #include "server.h"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <syslog.h>
-#include <pthread.h>
-#include <string.h>
     int maxFD;
 void* Accept()
 {
@@ -49,7 +40,10 @@ void* Accept()
 
     while(1){
     	//Re initialize all buffer handlers
-        copy_master = master;
+		sem_wait(&lock_master);
+        	copy_master = master;
+	    sem_post(&lock_master);
+
     	memset(&write_buf,0,256);
     	memset(&read_buf,0,256);
     	write_buf_itr =0;
@@ -59,7 +53,7 @@ void* Accept()
     		exit(-1);
     	}
     	
-    	if(FD_ISSET(listener,&copy_master)){ //Todo: use copy
+    	if(FD_ISSET(listener,&copy_master)){
     		printf("Detected connection\n");
     		addrlen = sizeof remoteSocketAddress;
     		int new_socket = accept(listener,(struct sockaddr *)&remoteSocketAddress,&addrlen);
@@ -76,13 +70,15 @@ void* Accept()
     		write_buf[write_buf_itr++] = client_count & 0xFF;
     		write_buf[write_buf_itr++] = client_count >> 8;
     		
-    		for(i =0;i<client_count;i++){
-	    		int name_length = strlen(clients[i].name);
-    			write_buf[write_buf_itr++] = name_length;//length of the name
-    			for(j=0;j<name_length;j++){
-    				write_buf[write_buf_itr++] = clients[i].name[j];
-    			}
-    		}
+			sem_wait(&lock_client);
+				for(i =0;i<client_count;i++){
+						int name_length = strlen(clients[i].name);
+					write_buf[write_buf_itr++] = name_length;//length of the name
+					for(j=0;j<name_length;j++){
+						write_buf[write_buf_itr++] = clients[i].name[j];
+					}
+				}
+			sem_post(&lock_client);
     		nbytes = write_buf_itr;
     		if(send(new_socket,write_buf,nbytes,0)== -1){
     			fprintf(f, "%s\n", "Error on send handshake");
@@ -100,9 +96,12 @@ void* Accept()
     		}
     		new_client.name[write_buf_itr] = '\0';
     		new_client.socket_id = new_socket;
-    		clients[client_count] = new_client;
 			send_client_change_notice(new_client.name,1);
-    		client_count++;
+
+			sem_wait(&lock_client);
+				clients[client_count] = new_client;
+				client_count++;
+	    	sem_post(&lock_client);
     		printf("A new client joined: %s, ID: %d\n", new_client.name,new_socket);
     	}
 	}
