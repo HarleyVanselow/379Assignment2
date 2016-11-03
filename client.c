@@ -36,6 +36,12 @@ void * check_connection(unsigned char * buf){
     }
 }
 
+void send_keep_alive_message(int sig){
+    printf("sending keep alive message\n"); fflush(stdout);
+    alarm(25);
+    send(client_socket,"0",1,0);
+}
+
 void * read_user_input(void * client_socket){
 
     char message[255];
@@ -61,6 +67,7 @@ void * read_user_input(void * client_socket){
             // printf("sending message: %s\n", message_to_send);
 
             // printf("Sending: %s", message_to_send); fflush(stdout);
+            alarm(25);
             send(*((int *)client_socket),message_to_send,256,0);//Shouldnt really be 256
 
             memset(message_to_send,0,256);
@@ -147,6 +154,22 @@ void close_client(int sig){
     exit(1);
 }
 
+void setupSigIntHandlers(){
+    struct sigaction onSigInt;
+    onSigInt.sa_handler = close_client;
+    sigemptyset(&onSigInt.sa_mask);
+    onSigInt.sa_flags = 1;
+
+    sigaction(SIGINT, &onSigInt, NULL);
+
+    struct sigaction onSigAlarm;
+    onSigAlarm.sa_handler = send_keep_alive_message;
+    sigemptyset(&onSigAlarm.sa_mask);
+    onSigAlarm.sa_flags = 1;
+
+    sigaction(SIGALRM, &onSigAlarm, NULL);
+}
+
 
 int main(int argc, char const *argv[]){
         if (argc != 4){
@@ -158,12 +181,7 @@ int main(int argc, char const *argv[]){
         int port_number = atoi(argv[2]);
         const char * username = argv[3];
 
-        struct sigaction onSigInt;
-        onSigInt.sa_handler = close_client;
-        sigemptyset(&onSigInt.sa_mask);
-        onSigInt.sa_flags = 1;
-
-        sigaction(SIGINT, &onSigInt, NULL);
+        setupSigIntHandlers();
 
         uint32_t number;
 
@@ -246,6 +264,6 @@ int main(int argc, char const *argv[]){
 
         pthread_t received_message;
         pthread_create(&received_message, NULL, received_messages, &client_socket);
-        
+        alarm(25);
         while(1);
 }
