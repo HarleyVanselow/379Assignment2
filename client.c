@@ -115,20 +115,15 @@ void * received_messages(void * client_socket){
             updated_username[username_length] = '\0';
             printf("%s has left the chat\n", updated_username);
             fflush(stdout);
-
             for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next){
                 // printf("%s\n", np->username);fflush(stdout);
+                printf("checking username: %s\n", np->username);
                 if (strcmp(np->username, updated_username) == 0){
+                    printf("removing node\n");
                     TAILQ_REMOVE(&head, np, entries);
+                    free(np);
                 }
             }
-            // entry * new_entry = (entry *)malloc(sizeof(struct entry));
-            // // printf("5\n"); fflush(stdout);
-            // new_entry->username = updated_username;
-            // // printf("6\n"); fflush(stdout);
-
-            // TAILQ_REMOVE(&head, new_entry, entries);
-            // free(new_entry);
         }
         message_type = 0;
         username_length = 0;
@@ -139,7 +134,8 @@ void * received_messages(void * client_socket){
 
 void * send_username(void * client_socket, const char * username){
     char message_to_send[256];
-    snprintf(message_to_send, sizeof message_to_send, "%d%s", strlen(username), username);
+    uint8_t username_length = strlen(username);
+    snprintf(message_to_send, sizeof message_to_send, "%c%s", username_length, username);
     // printf("Your Username: %s\n",message_to_send );
         send(*((int *)client_socket),message_to_send,256,0);//Shouldnt really be 256
     }
