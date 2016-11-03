@@ -192,14 +192,15 @@ int main(int argc, char const *argv[]){
     // Now get the list of usernames 
         int counter = 0;
         for (counter; counter < number_of_connected_users; counter++){
-            read(client_socket, &buf, 1);
-            int username_length = buf[0];
-            printf("1\n"); fflush(stdout);
+            int username_length;
+            read(client_socket, &username_length, 1);
 
-            char current_username[username_length];// = malloc(username_length*sizeof(char));
+            // printf("1: username_length: %d\n", username_length); fflush(stdout);
+
+            char * current_username = malloc(username_length+1);
             // printf("2\n"); fflush(stdout);
-            read(client_socket, &current_username, username_length);
-            // printf("3\n"); fflush(stdout);
+            read(client_socket, current_username, username_length);
+            // printf("3:\n"); fflush(stdout);
             current_username[username_length] = '\0';
             // printf("4\n"); fflush(stdout);
 
@@ -210,38 +211,24 @@ int main(int argc, char const *argv[]){
 
             TAILQ_INSERT_TAIL(&head, new_entry, entries);
             free(new_entry);
-
-            // printf("Adding username: %s\n", current_username); fflush(stdout);
+            printf("Adding username: %s\n", current_username); fflush(stdout);
+            printf("Adding username: %s\n", current_username); fflush(stdout);
         } 
         printf("Current users: \n"); fflush(stdout);
 
  		for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next){
                 printf("%s\n", np->username); fflush(stdout);
         }
-    // send username
         send_username(&client_socket, username);
 
-    //thread for handling user input
+        send(client_socket,"0",1,0);//Shouldnt really be 256
+        read (client_socket, &buf, 256);
+
         pthread_t user_input;
         pthread_create(&user_input, NULL, read_user_input, &client_socket);
 
         pthread_t received_message;
         pthread_create(&received_message, NULL, received_messages, &client_socket);
-
-        read (client_socket, &buf, 256);
+        
         while(1);
-   //  while (1){
-
-   //      int message_size = read (client_socket, &buf, 256);
-   //      int i = 2;
-   //      while (i < message_size){
-   //          if (buf[i] == '\0'){
-   //              printf(":");
-   //          } else {
-   //             printf("%c", buf[i]);
-   //         }
-   //         fflush(stdout);
-   //         i ++;
-   //     } 
-   // }
-    }
+}
