@@ -49,7 +49,7 @@ void* Accept()
     	write_buf_itr =0;
     	read_buf_itr=0;
 
-    	if(select(maxFD+1,&copy_master,NULL,NULL,NULL) == -1){
+    	if(select(listener+1,&copy_master,NULL,NULL,NULL) == -1){
     		exit(-1);
     	}
     	
@@ -96,9 +96,9 @@ void* Accept()
     		}
     		new_client.name[write_buf_itr] = '\0';
     		new_client.socket_id = new_socket;
-			send_client_change_notice(new_client.name,1);
 
 			sem_wait(&lock_client);
+				send_client_change_notice(new_client.name,1);
 				clients[client_count] = new_client;
 				client_count++;
 	    	sem_post(&lock_client);

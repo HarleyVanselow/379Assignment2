@@ -3,16 +3,14 @@
 void terminate(int i)
 {
 	int j;
-	printf("Connection terminated\n");
 
 	sem_wait(&lock_client);
 	sem_wait(&lock_master);
 		close(clients[i].socket_id);
 		FD_CLR(clients[i].socket_id,&master);
 	sem_post(&lock_master);
-	sem_post(&lock_client);
 
-
+	printf("%s terminated, notifying...\n",clients[i].name);
 	send_client_change_notice(clients[i].name,2);
 	if(!(i+1 == client_count)){//Isn't end element
 		for(j=i;j<client_count-1;j++){
@@ -20,6 +18,7 @@ void terminate(int i)
 		} 
 	}
 	client_count--;
+	sem_post(&lock_client);
 
 	sem_wait(&lock_master);
 	for(j=0;j<client_count;j++){ // Update new maxFD

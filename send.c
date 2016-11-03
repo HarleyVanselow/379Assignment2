@@ -30,7 +30,7 @@ void send_client_buffer(int i) //This method already has clients locked for it
 
 	memset(clients[i].buf,0,256);
 }
-void send_client_change_notice(char* name,int joined_or_left)
+void send_client_change_notice(char* name,int joined_or_left) // Already client locked
 {
 	unsigned char write_buf[256];
 	int write_buf_itr=0;
@@ -41,11 +41,11 @@ void send_client_change_notice(char* name,int joined_or_left)
 	for(j=0;j<name_length;j++){
 		write_buf[write_buf_itr++] = name[j];
 	}
-	sem_wait(&lock_client);
-		for(j =0; j<client_count;j++){
-			send(clients[j].socket_id,write_buf,write_buf_itr,0);
-		}	
-	sem_post(&lock_client);
+	
+	for(j =0; j<client_count;j++){
+		send(clients[j].socket_id,write_buf,write_buf_itr,0);
+	}	
+	
 }
 
 void* Send()
@@ -56,7 +56,7 @@ void* Send()
 	while(1){
 		for(i =0; i<client_count;i++){
 			sem_wait(&lock_client);
-				if(clients[i].buf[0] != 0){
+				if(clients[i].buf[0] != 0){ //todo better check
 					send_client_buffer(i);
 				}
 	    	sem_post(&lock_client);

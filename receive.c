@@ -16,9 +16,9 @@ void* Receive()
 		copy_master = master;
 		timeoutConfig.tv_sec =0;
 		timeoutConfig.tv_usec =500;
-		sem_wait(&lock_master);
-			int select_result =select(maxFD+1,&copy_master,NULL,NULL,&timeoutConfig);
-		sem_post(&lock_master);
+		
+		int select_result =select(maxFD+1,&copy_master,NULL,NULL,&timeoutConfig);
+		
 		if(select_result == -1){
 			printf("errno: %d\n",errno);
 			fprintf(f,"Select statement in receive thread failed");
@@ -28,7 +28,7 @@ void* Receive()
 			// printf("Before client lock...\n");
 			//Locked here
 			sem_wait(&lock_client);
-				int client_id = clients[i].socket_id; // Todo: mutex
+				int client_id = clients[i].socket_id;
 	    	sem_post(&lock_client);
 			if(FD_ISSET(client_id,&copy_master)){
 				size_received = read(client_id,&buf,65535 );
@@ -43,7 +43,7 @@ void* Receive()
 							clients[i].buf[write_buf_itr++] = buf[read_buf_itr+2];
 						}
 							clients[i].buf[message_length+1] = '\0';
-							printf("%s: %s\n",clients[i].name,clients[i].buf);
+							printf("Received %s from %s\n",clients[i].buf,clients[i].name);
 							fflush(stdout);
 					}
 					clients[i].time_since_last_received=0;
