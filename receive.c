@@ -25,14 +25,12 @@ void* Receive()
 			exit(-1);
 		}
 		for(i = 0;i<client_count;i++){
-			// printf("Before client lock...\n");
-			//Locked here
 			sem_wait(&lock_client);
 				int client_id = clients[i].socket_id;
 	    	sem_post(&lock_client);
 			if(FD_ISSET(client_id,&copy_master)){
 				size_received = read(client_id,&buf,65535 );
-				if(size_received == 0){
+				if(size_received < 1){
 					terminate(i);
 					break;
 				}
@@ -43,7 +41,7 @@ void* Receive()
 							clients[i].buf[write_buf_itr++] = buf[read_buf_itr+2];
 						}
 							clients[i].buf[message_length+1] = '\0';
-							printf("Received %s from %s\n",clients[i].buf,clients[i].name);
+							printf("Received %s from %s. Size received: %d\n",clients[i].buf,clients[i].name,size_received);
 							fflush(stdout);
 					}
 					clients[i].time_since_last_received=0;
