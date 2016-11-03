@@ -30,8 +30,9 @@ int main(int argc, char const *argv[])
 	fflush(f);
 	pthread_t threads[3];
 	pthread_create(&threads[0],NULL,Accept,NULL);
-	pthread_create(&threads[1],NULL,Recieve,NULL);
+	pthread_create(&threads[1],NULL,Receive,NULL);
 	pthread_create(&threads[2],NULL,Send,NULL);
+	pthread_create(&threads[3],NULL,TimeoutCheck,NULL);
 	pthread_join(threads[0],NULL);
 	
 

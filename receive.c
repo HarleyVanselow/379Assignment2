@@ -25,13 +25,13 @@ void terminate(int i)
 	
 	
 }
-void* Recieve(void* input)
+void* Receive(void* input)
 {
 	fprintf(f,"Recieving thread started\n");
 	fflush(f);
 	fd_set copy_master;
 	unsigned char buf[65535];
-	int size_recieved;
+	int size_received;
 	struct timeval timeoutConfig;
 	int i,j;
 	while(1){
@@ -44,14 +44,14 @@ void* Recieve(void* input)
 		int select_result =select(maxFD+1,&copy_master,NULL,NULL,&timeoutConfig);
 		if(select_result == -1){
 			printf("errno: %d\n",errno);
-			fprintf(f,"Select statement in recieve thread failed");
+			fprintf(f,"Select statement in receive thread failed");
 			exit(-1);
 		}
 		for(i = 0;i<client_count;i++){
 			int client_id = clients[i].socket_id; // Todo: mutex
 			if(FD_ISSET(client_id,&copy_master)){
-				size_recieved = read(client_id,&buf,65535 );
-				if(size_recieved == 0){
+				size_received = read(client_id,&buf,65535 );
+				if(size_received == 0){
 					terminate(i);
 					break;
 				}
