@@ -29,16 +29,21 @@ void* Receive()
 				int client_id = clients[i].socket_id;
 	    	sem_post(&lock_client);
 			if(FD_ISSET(client_id,&copy_master)){
+
+				uint16_t message_length;
+				read(client_id, & message_length, 2);
+				message_length = ntohs(message_length);
+
 				size_received = read(client_id,&buf,65535);
 				if(size_received < 1){
 					terminate(i);
 					break;
 				}
-				int message_length = (buf[0] & 0xFF)+(buf[1] >> 8);
+				// int message_length = (buf[0] & 0xFF)+(buf[1] >> 8);
 				sem_wait(&lock_client);
 					if(message_length !=0 ){					
 						for(read_buf_itr=0;read_buf_itr<message_length;read_buf_itr++){
-							clients[i].buf[write_buf_itr++] = buf[read_buf_itr+2];
+							clients[i].buf[write_buf_itr++] = buf[read_buf_itr];
 						}
 						clients[i].buf[message_length+1] = '\0';
 						fprintf(f,"Received %s from %s\n",clients[i].buf,clients[i].name);

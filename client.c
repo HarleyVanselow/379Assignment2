@@ -102,7 +102,6 @@ void * received_messages(void * client_socket){
             read(*((int *)client_socket), &message_length, 2);
             message_length = htons(message_length);
             char received_message[message_length+1];
-            printf("message_length: %d\n", message_length); fflush(stdout);
             read(*((int *)client_socket), &received_message, message_length);
             received_message[message_length] = '\0';
 
@@ -152,8 +151,6 @@ void close_client(int sig){
     printf("Closing client\n");fflush(stdout);
     close(client_socket);
     shutdown(client_socket, 2);
-    // pthread_exit(user_input);
-    // pthread_exit(received_message);
     exit(1);
 }
 
