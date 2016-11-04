@@ -32,6 +32,8 @@ TAILQ_HEAD(tailhead, entry) head;
 struct tailhead *headp;                    
 entry *np;
 
+void close_client(int sig);
+
 void * check_connection(unsigned char * buf){
     if (buf[0] == 207 && buf[1] == 167){
         printf("Connection Established!\n");
@@ -88,7 +90,10 @@ void * received_messages(void * client_socket){
     while (1){
 
         //wait until we get something
-        read (*((int *)client_socket), &message_type, 1);
+       int message_received = read (*((int *)client_socket), &message_type, 1);
+       if (message_received <= 0){
+        close_client(0);    
+       }
 
         if (message_type == UPDATE_MESSAGE) {
 
