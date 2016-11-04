@@ -11,6 +11,7 @@ int main(int argc, char const *argv[])
 {
 	int daemon_result = daemon(1,1);
 	signal(SIGTERM,terminate_server);
+	// signal(SIGINT, terminate_server);
 	char filename[30];
 	sprintf(filename,"server379%d.log",getpid());//Todo: validate port # input
 	f = fopen(filename,"a+");

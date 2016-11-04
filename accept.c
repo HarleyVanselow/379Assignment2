@@ -99,24 +99,26 @@ void* Accept()
             sem_wait(&lock_client);
             int counter = 0;
             int valid_client = 1;
+            fprintf(f, "current_clients: %d\n", client_count);
             for (counter; counter < client_count; counter++){
-                fprintf(f,"current client: %s, new client: %s\n", clients[counter].name, new_client.name);
-                if (strcmp(clients[i].name, new_client.name) == 0){
+                if (strncmp(new_client.name, clients[counter].name, strlen(new_client.name)) == 0){
                     fprintf(f,"Rejected client with duplicate name: %s\n", new_client.name);
-                    // printf("Rejected client with duplicate name: %s\n", new_client.name);
                     valid_client = 0;
+                    sem_wait(&lock_master);
+                        close(new_client.socket_id);
+                        FD_CLR(new_client.socket_id,&master);
+                    sem_post(&lock_master);
                     break;
                 }
             }
             sem_post(&lock_client);
-
             if (valid_client == 1){
+                fprintf(f,"A new client joined: %s, ID: %d\n", new_client.name,new_socket);
                 sem_wait(&lock_client);
                     clients[client_count] = new_client;
                     client_count++;
                     send_client_change_notice(new_client.name,1);
                 sem_post(&lock_client);
-                fprintf(f,"A new client joined: %s, ID: %d\n", new_client.name,new_socket);
             }
         }
     }
