@@ -69,7 +69,7 @@ void * read_user_input(void * client_socket){
             snprintf(message_to_send, sizeof message_to_send, "%c%c%s", message_length & 0xFF, message_length >> 8, message);
 
             alarm(25);
-            send(*((int *)client_socket),message_to_send,256,0);//Shouldnt really be 256
+            send(*((int *)client_socket),message_to_send,message_length+1,0);//Shouldnt really be 256
 
             memset(message_to_send,0,256);
         }
