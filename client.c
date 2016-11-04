@@ -83,7 +83,9 @@ void handle_message(){
     sender_username[username_length] = '\0';
 
     read(client_socket, &message_length, 2);
+
     message_length = ntohs(message_length);
+
     char * received_message = malloc (message_length+1);
     read(client_socket, received_message, message_length);
     received_message[message_length] = '\0';
