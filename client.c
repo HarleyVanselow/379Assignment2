@@ -254,13 +254,13 @@ int main(int argc, char const *argv[]){
             printf("%s\n", np->username); fflush(stdout);
         }
     } else {
-     printf("There is nobody here yet!\n"); fflush(stdout);
- }
- send_username(username);
+        printf("There is nobody here yet!\n"); fflush(stdout);
+    }
+    send_username(username);
 
- pthread_create(&user_input, NULL, read_user_input, NULL);
+    pthread_create(&user_input, NULL, read_user_input, NULL);
 
- pthread_create(&received_message, NULL, handle_received_message, NULL);
- alarm(25);
- while(1);
+    pthread_create(&received_message, NULL, handle_received_message, NULL);
+    alarm(25);
+    while(1);
 }
