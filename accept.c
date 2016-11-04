@@ -35,13 +35,18 @@ void* Accept()
     if(listen(listener,50) == -1){ //To many queued?
         exit(-1);
     }
-
-    FD_SET(listener,&master); //Todo: mutex
+    sem_wait(&lock_master);
+    	FD_SET(listener,&master); 
+    sem_post(&lock_master);
     struct timeval timeoutConfig;
     timeoutConfig.tv_sec =0;
     timeoutConfig.tv_usec =500;
     while(1){
-        if(server_exit){pthread_exit(NULL);}
+        if(server_exit){
+			close(listener);
+			FD_CLR(listener,&master);
+        	pthread_exit(NULL);
+        }
         //Re initialize all buffer handlers
         sem_wait(&lock_master);
             copy_master = master;
