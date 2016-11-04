@@ -153,10 +153,7 @@ void * handle_received_message(){
 }
 
 void * send_username(const char * username){
-    // char message_to_send[256];
     uint8_t username_length = strlen(username);
-    // snprintf(message_to_send, sizeof message_to_send, "%c%s", username_length, username);
-    printf("sending username: %s\n", username); fflush(stdout);
     send(client_socket, &username_length, sizeof(username_length), 0);
     send(client_socket,username,username_length, 0);//Shouldnt really be 256
 }
@@ -241,11 +238,9 @@ int main(int argc, char const *argv[]){
     for (counter; counter < number_of_connected_users; counter++){
 
         read(client_socket, &username_length, 1);
-        printf("username_length: %c\n", username_length);
         char * updated_username = malloc (username_length+1); //Plus one for null terminator
         read(client_socket, updated_username, username_length);
         updated_username[username_length] = '\0';
-        printf("%s has joined the chat\n", updated_username);
         fflush(stdout);
 
         entry * new_entry = (entry *)malloc(sizeof(struct entry));
