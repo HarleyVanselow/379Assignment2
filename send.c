@@ -1,7 +1,7 @@
 #include "server.h"
 void send_client_buffer(int i) //This method already has clients locked for it
 {
-	unsigned char write_buf[256];
+	unsigned char write_buf[max_buf_size];
 	int write_buf_itr=0;
 	int read_buf_itr=0;
 	int j;
@@ -28,7 +28,7 @@ void send_client_buffer(int i) //This method already has clients locked for it
 		send(clients[j].socket_id,write_buf,write_buf_itr,0);	
 	}
 
-	memset(clients[i].buf,0,256);
+	memset(clients[i].buf,0,max_buf_size);
 }
 void send_client_change_notice(char* name, char joined_or_left) // Already client locked
 {

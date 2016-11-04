@@ -5,13 +5,13 @@ void* Receive()
 {
 	fprintf(f,"Recieving thread started\n");
 	fd_set copy_master;
-	unsigned char buf[65535];
+	unsigned char buf[max_buf_size];
 	int size_received;
 	struct timeval timeoutConfig;
 	int i,j;
 	while(1){
 		if(server_exit){pthread_exit(NULL);}
-		memset(buf,0,65535);
+		memset(buf,0,max_buf_size);
 		int read_buf_itr=0;
 		int write_buf_itr=0;
 		copy_master = master;
@@ -34,7 +34,7 @@ void* Receive()
 				size_received = read(client_id, & message_length, 2);
 				message_length = ntohs(message_length);
 				if(message_length != 0){
-					size_received = read(client_id,&buf,65535);
+					size_received = read(client_id,&buf,max_buf_size);
 				}
 				if(size_received < 1){
 					terminate(i);

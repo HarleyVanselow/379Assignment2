@@ -17,9 +17,9 @@ struct client
 	int time_since_last_received;
 	unsigned char name[256];
 	unsigned char buf[65535]; //Can hold largest possible message	
-}clients[50];
+}clients[100]; //Only 100 clients allowed
 #endif
-
+extern int max_buf_size;
 extern FILE *f;
 extern int MY_PORT;
 extern fd_set master;

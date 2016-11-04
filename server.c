@@ -7,6 +7,7 @@ unsigned short client_count=0;
 sem_t lock_client;
 sem_t lock_master;
 int server_exit = 0;
+int max_buf_size = 65535;
 int main(int argc, char const *argv[])
 {
 	int daemon_result = daemon(1,1);
