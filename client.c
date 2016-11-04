@@ -25,12 +25,19 @@ struct tailhead *headp;
 entry *np;
 
 void check_connection(){
-    unsigned char buf[2];
-    read (client_socket, &buf, 2);
+    unsigned char buf[1];
+    read (client_socket, &buf, 1);
 
-    if (buf[0] == 207 && buf[1] == 167){
-        printf("Connection Established!\n");
-        fflush(stdout); 
+    if (buf[0] == 0xCF){
+        read(client_socket, &buf, 1);
+        if (buf[0] == 0xA7){
+            printf("Connection Established!\n");
+            fflush(stdout); 
+        } else {
+            printf("Connection closed by server\n");
+            fflush(stdout); 
+            exit(-1);
+        }
     } else {
         printf("Connection closed by server\n");
         fflush(stdout); 
@@ -145,6 +152,8 @@ void * handle_received_message(){
 
         } else if (message_type == USER_QUIT) {
             handle_client_quit();
+        }else {
+            close_client(0);
         }
 
         message_type = 0;
