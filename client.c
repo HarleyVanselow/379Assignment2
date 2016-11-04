@@ -20,6 +20,9 @@
 int number_of_connected_users;
 int client_socket;
 
+pthread_t user_input;
+pthread_t received_message;
+
 typedef struct entry {
    TAILQ_ENTRY(entry) entries;
    char * username;        
@@ -138,13 +141,15 @@ void * send_username(void * client_socket, const char * username){
     char message_to_send[256];
     uint8_t username_length = strlen(username);
     snprintf(message_to_send, sizeof message_to_send, "%c%s", username_length, username);
-    send(*((int *)client_socket),message_to_send,256,0);//Shouldnt really be 256
+    send(*((int *)client_socket),message_to_send,username_length+1,0);//Shouldnt really be 256
 }
 
 void close_client(int sig){
     printf("Closing client\n");fflush(stdout);
     close(client_socket);
     shutdown(client_socket, 2);
+    // pthread_exit(user_input);
+    // pthread_exit(received_message);
     exit(1);
 }
 
@@ -240,10 +245,8 @@ int main(int argc, char const *argv[]){
    }
    send_username(&client_socket, username);
 
-   pthread_t user_input;
    pthread_create(&user_input, NULL, read_user_input, &client_socket);
 
-   pthread_t received_message;
    pthread_create(&received_message, NULL, received_messages, &client_socket);
    alarm(25);
    while(1);
