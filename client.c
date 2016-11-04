@@ -82,7 +82,7 @@ void handle_message(){
     sender_username[username_length] = '\0';
 
     read(client_socket, &message_length, 2);
-    message_length = htons(message_length);
+    
     char received_message[message_length+1];
     read(client_socket, &received_message, message_length);
     received_message[message_length] = '\0';
@@ -222,7 +222,7 @@ int main(int argc, char const *argv[]){
     }
 
     check_connection();
-    uint8_t number_of_connected_users;
+    uint16_t number_of_connected_users;
     read (client_socket, &number_of_connected_users, 2);
     if (number_of_connected_users != 0){
         printf("There are already %d users connected!\n", number_of_connected_users);
