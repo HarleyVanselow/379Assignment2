@@ -12,10 +12,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <inttypes.h>
-
-#define UPDATE_MESSAGE 0x00
-#define USER_JOINED 0x01
-#define USER_QUIT 0x02
+#include "client.h"
 
 int number_of_connected_users;
 int client_socket;
@@ -23,18 +20,14 @@ int client_socket;
 pthread_t user_input;
 pthread_t received_message;
 
-typedef struct entry {
-   TAILQ_ENTRY(entry) entries;
-   char * username;        
-} entry;
-
 TAILQ_HEAD(tailhead, entry) head;
 struct tailhead *headp;                    
 entry *np;
 
-void close_client(int sig);
+void check_connection(){
+    unsigned char buf[2];
+    read (client_socket, &buf, 2);
 
-void * check_connection(unsigned char * buf){
     if (buf[0] == 207 && buf[1] == 167){
         printf("Connection Established!\n");
         fflush(stdout); 
@@ -51,7 +44,7 @@ void send_keep_alive_message(int sig){
     send(client_socket, &keep_alive_message,2,0);
 }
 
-void * read_user_input(void * client_socket){
+void * read_user_input(){
 
     char message[256];
 
@@ -72,8 +65,8 @@ void * read_user_input(void * client_socket){
         } else if (strlen(message) > 0){
             uint16_t message_length= htons(strlen(message));
             alarm(25);
-            send(*((int *)client_socket),&message_length,sizeof(message_length),0);
-            send(*((int *)client_socket),message,message_length,0);//Shouldnt really be 256
+            send(client_socket,&message_length,sizeof(message_length),0);
+            send(client_socket,message,message_length,0);//Shouldnt really be 256
 
             memset(message,0,256);
         }
@@ -81,36 +74,36 @@ void * read_user_input(void * client_socket){
 }
 
 
-void * received_messages(void * client_socket){
+void * received_messages(){
     unsigned char message_type;
     uint8_t username_length;
     uint16_t message_length;
     while (1){
 
         //wait until we get something
-       int message_received = read (*((int *)client_socket), &message_type, 1);
+       int message_received = read (client_socket, &message_type, 1);
        if (message_received <= 0){
         close_client(0);    
        }
 
         if (message_type == UPDATE_MESSAGE) {
-            read(*((int *)client_socket), &username_length, 1);
+            read(client_socket, &username_length, 1);
             char sender_username[username_length+1];
-            read(*((int *)client_socket), &sender_username, username_length);
+            read(client_socket, &sender_username, username_length);
             sender_username[username_length] = '\0';
 
-            read(*((int *)client_socket), &message_length, 2);
+            read(client_socket, &message_length, 2);
             message_length = htons(message_length);
             char received_message[message_length+1];
-            read(*((int *)client_socket), &received_message, message_length);
+            read(client_socket, &received_message, message_length);
             received_message[message_length] = '\0';
 
             printf("%s: %s\n", sender_username, received_message);
             fflush(stdout);
         } else if (message_type == USER_JOINED) {
-            read(*((int *)client_socket), &username_length, 1);
+            read(client_socket, &username_length, 1);
             char * updated_username = malloc (username_length+1);
-            read(*((int *)client_socket), updated_username, username_length);
+            read(client_socket, updated_username, username_length);
             updated_username[username_length] = '\0';
             printf("%s has joined the chat\n", updated_username);
             fflush(stdout);
@@ -119,9 +112,9 @@ void * received_messages(void * client_socket){
             new_entry->username = updated_username;
             TAILQ_INSERT_TAIL(&head, new_entry, entries);
         } else if (message_type == USER_QUIT) {
-            read(*((int *)client_socket), &username_length, 1);
+            read(client_socket, &username_length, 1);
             char updated_username[username_length + 1];// = malloc(username_length+1);
-            read(*((int *)client_socket), updated_username, username_length);
+            read(client_socket, updated_username, username_length);
             updated_username[username_length] = '\0';
             printf("%s has left the chat\n", updated_username);
             fflush(stdout);
@@ -140,11 +133,11 @@ void * received_messages(void * client_socket){
     }
 }
 
-void * send_username(void * client_socket, const char * username){
+void * send_username(const char * username){
     char message_to_send[256];
     uint8_t username_length = strlen(username);
     snprintf(message_to_send, sizeof message_to_send, "%c%s", username_length, username);
-    send(*((int *)client_socket),message_to_send,username_length+1,0);//Shouldnt really be 256
+    send(client_socket,message_to_send,username_length+1,0);//Shouldnt really be 256
 }
 
 void close_client(int sig){
@@ -212,8 +205,7 @@ int main(int argc, char const *argv[]){
         exit (1);
     }
 
-    read (client_socket, &buf, 2);
-    check_connection(buf);
+    check_connection();
     uint8_t number_of_connected_users;
     read (client_socket, &number_of_connected_users, 2);
     if (number_of_connected_users != 0){
@@ -248,11 +240,11 @@ int main(int argc, char const *argv[]){
     } else {
        printf("There is nobody here yet!\n"); fflush(stdout);
    }
-   send_username(&client_socket, username);
+   send_username(username);
 
-   pthread_create(&user_input, NULL, read_user_input, &client_socket);
+   pthread_create(&user_input, NULL, read_user_input, NULL);
 
-   pthread_create(&received_message, NULL, received_messages, &client_socket);
+   pthread_create(&received_message, NULL, received_messages, NULL);
    alarm(25);
    while(1);
 }
