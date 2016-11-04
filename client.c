@@ -47,7 +47,8 @@ void * check_connection(unsigned char * buf){
 
 void send_keep_alive_message(int sig){
     alarm(25);
-    send(client_socket,"00",2,0);
+    uint16_t keep_alive_message = htons(0);
+    send(client_socket, &keep_alive_message,2,0);
 }
 
 void * read_user_input(void * client_socket){
@@ -71,7 +72,7 @@ void * read_user_input(void * client_socket){
         } else {
             char message_to_send[256];
             uint16_t message_length= strlen(message);
-            snprintf(message_to_send, sizeof message_to_send, "%c%c%s", message_length & 0xFF, message_length >> 8, message);
+            snprintf(message_to_send, sizeof message_to_send, "%c%c%s", message_length & 0xFF, (message_length >> 8) & 0xFF, message);
 
             alarm(25);
             send(*((int *)client_socket),message_to_send,message_length+1,0);//Shouldnt really be 256
@@ -84,9 +85,8 @@ void * read_user_input(void * client_socket){
 
 void * received_messages(void * client_socket){
     unsigned char message_type;
-    int username_length;
+    uint8_t username_length;
     uint16_t message_length;
-    char buf[256];
     while (1){
 
         //wait until we get something
@@ -96,14 +96,15 @@ void * received_messages(void * client_socket){
        }
 
         if (message_type == UPDATE_MESSAGE) {
-
             read(*((int *)client_socket), &username_length, 1);
-            char sender_username[username_length];
+            char sender_username[username_length+1];
             read(*((int *)client_socket), &sender_username, username_length);
             sender_username[username_length] = '\0';
 
             read(*((int *)client_socket), &message_length, 2);
-            char received_message[message_length];
+            message_length = htons(message_length);
+            char received_message[message_length+1];
+            printf("message_length: %d\n", message_length); fflush(stdout);
             read(*((int *)client_socket), &received_message, message_length);
             received_message[message_length] = '\0';
 
@@ -218,7 +219,7 @@ int main(int argc, char const *argv[]){
 
     read (client_socket, &buf, 2);
     check_connection(buf);
-    uint16_t number_of_connected_users;
+    uint8_t number_of_connected_users;
     read (client_socket, &number_of_connected_users, 2);
     if (number_of_connected_users != 0){
         printf("There are already %d users connected!\n", number_of_connected_users);
@@ -227,15 +228,19 @@ int main(int argc, char const *argv[]){
     
         // Now get the list of usernames 
     int counter = 0;
+    uint8_t username_length;
     for (counter; counter < number_of_connected_users; counter++){
-        int username_length;
+        
         read(client_socket, &username_length, 1);
-        char * current_username = malloc(username_length+1);
-        read(client_socket, current_username, username_length);
-        current_username[username_length] = '\0';
+        printf("username_length: %c\n", username_length);
+        char * updated_username = malloc (username_length+1);
+        read(client_socket, updated_username, username_length);
+        updated_username[username_length] = '\0';
+        printf("%s has joined the chat\n", updated_username);
+        fflush(stdout);
 
         entry * new_entry = (entry *)malloc(sizeof(struct entry));
-        new_entry->username = current_username;
+        new_entry->username = updated_username;
         TAILQ_INSERT_TAIL(&head, new_entry, entries);
     } 
 
