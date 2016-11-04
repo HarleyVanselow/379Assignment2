@@ -64,7 +64,7 @@ int main(int argc, char const *argv[])
 		terminate(i);
 	}
 
- 	fprintf(f, "Exited\n");
+ 	fprintf(f, "Terminating...\n");
 	fflush(f);
 	return 0;
 }

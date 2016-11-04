@@ -42,7 +42,7 @@ void * check_connection(unsigned char * buf){
 
 void send_keep_alive_message(int sig){
     alarm(25);
-    send(client_socket,"0",1,0);
+    send(client_socket,"00",2,0);
 }
 
 void * read_user_input(void * client_socket){
@@ -239,8 +239,6 @@ int main(int argc, char const *argv[]){
        printf("There is nobody here yet!\n"); fflush(stdout);
    }
    send_username(&client_socket, username);
-
-   send(client_socket,"0",1,0);
 
    pthread_t user_input;
    pthread_create(&user_input, NULL, read_user_input, &client_socket);
