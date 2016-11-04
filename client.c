@@ -73,63 +73,79 @@ void * read_user_input(){
     }
 }
 
-
-void * received_messages(){
-    unsigned char message_type;
+void handle_message(){
     uint8_t username_length;
     uint16_t message_length;
+    read(client_socket, &username_length, 1);
+    char sender_username[username_length+1];
+    read(client_socket, &sender_username, username_length);
+    sender_username[username_length] = '\0';
+
+    read(client_socket, &message_length, 2);
+    message_length = htons(message_length);
+    char received_message[message_length+1];
+    read(client_socket, &received_message, message_length);
+    received_message[message_length] = '\0';
+
+    printf("%s: %s\n", sender_username, received_message);
+    fflush(stdout);
+}
+
+void handle_client_join(){
+    uint8_t username_length;
+    uint16_t message_length;
+    read(client_socket, &username_length, 1);
+    char * updated_username = malloc (username_length+1);
+    read(client_socket, updated_username, username_length);
+    updated_username[username_length] = '\0';
+    printf("%s has joined the chat\n", updated_username);
+    fflush(stdout);
+
+    entry * new_entry = (entry *)malloc(sizeof(struct entry));
+    new_entry->username = updated_username;
+    TAILQ_INSERT_TAIL(&head, new_entry, entries);
+}
+
+void handle_client_quit(){
+    uint8_t username_length;
+    uint16_t message_length;
+    read(client_socket, &username_length, 1);
+    char updated_username[username_length + 1];// = malloc(username_length+1);
+    read(client_socket, updated_username, username_length);
+    updated_username[username_length] = '\0';
+    printf("%s has left the chat\n", updated_username);
+    fflush(stdout);
+    entry * current_node;
+    for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next){
+        if (strcmp(np->username, updated_username) == 0){
+            TAILQ_REMOVE(&head, np, entries);
+            break;
+        }
+    }
+}
+
+void * handle_received_message(){
+    unsigned char message_type;
+
     while (1){
 
         //wait until we get something
-       int message_received = read (client_socket, &message_type, 1);
-       if (message_received <= 0){
-        close_client(0);    
-       }
-
-        if (message_type == UPDATE_MESSAGE) {
-            read(client_socket, &username_length, 1);
-            char sender_username[username_length+1];
-            read(client_socket, &sender_username, username_length);
-            sender_username[username_length] = '\0';
-
-            read(client_socket, &message_length, 2);
-            message_length = htons(message_length);
-            char received_message[message_length+1];
-            read(client_socket, &received_message, message_length);
-            received_message[message_length] = '\0';
-
-            printf("%s: %s\n", sender_username, received_message);
-            fflush(stdout);
-        } else if (message_type == USER_JOINED) {
-            read(client_socket, &username_length, 1);
-            char * updated_username = malloc (username_length+1);
-            read(client_socket, updated_username, username_length);
-            updated_username[username_length] = '\0';
-            printf("%s has joined the chat\n", updated_username);
-            fflush(stdout);
-
-            entry * new_entry = (entry *)malloc(sizeof(struct entry));
-            new_entry->username = updated_username;
-            TAILQ_INSERT_TAIL(&head, new_entry, entries);
-        } else if (message_type == USER_QUIT) {
-            read(client_socket, &username_length, 1);
-            char updated_username[username_length + 1];// = malloc(username_length+1);
-            read(client_socket, updated_username, username_length);
-            updated_username[username_length] = '\0';
-            printf("%s has left the chat\n", updated_username);
-            fflush(stdout);
-            entry * current_node;
-            for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next){
-                if (strcmp(np->username, updated_username) == 0){
-                    TAILQ_REMOVE(&head, np, entries);
-                    break;
-                }
-            }
+        int message_received = read (client_socket, &message_type, 1);
+        if (message_received <= 0){
+            close_client(0);    
         }
+        if (message_type == UPDATE_MESSAGE) {
+            handle_message();
+
+        } else if (message_type == USER_JOINED) {
+            handle_client_join();
+
+        } else if (message_type == USER_QUIT) {
+            handle_client_quit();
+        }
+
         message_type = 0;
-        username_length = 0;
-        message_length = 0;
-        
+
     }
 }
 
@@ -217,7 +233,7 @@ int main(int argc, char const *argv[]){
     int counter = 0;
     uint8_t username_length;
     for (counter; counter < number_of_connected_users; counter++){
-        
+
         read(client_socket, &username_length, 1);
         printf("username_length: %c\n", username_length);
         char * updated_username = malloc (username_length+1);
@@ -238,13 +254,13 @@ int main(int argc, char const *argv[]){
             printf("%s\n", np->username); fflush(stdout);
         }
     } else {
-       printf("There is nobody here yet!\n"); fflush(stdout);
-   }
-   send_username(username);
+     printf("There is nobody here yet!\n"); fflush(stdout);
+ }
+ send_username(username);
 
-   pthread_create(&user_input, NULL, read_user_input, NULL);
+ pthread_create(&user_input, NULL, read_user_input, NULL);
 
-   pthread_create(&received_message, NULL, received_messages, NULL);
-   alarm(25);
-   while(1);
+ pthread_create(&received_message, NULL, handle_received_message, NULL);
+ alarm(25);
+ while(1);
 }

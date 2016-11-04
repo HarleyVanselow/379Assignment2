@@ -34,6 +34,10 @@ void setupSigIntHandlers();
 void check_connection();
 
 void * read_user_input();
-void * received_messages();
+void * handle_received_message();
+
+void handle_client_quit();
+void handle_client_join();
+void handle_message();
 
 #endif
