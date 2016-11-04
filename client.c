@@ -39,9 +39,10 @@ void check_connection(){
 }
 
 void send_keep_alive_message(int sig){
+    uint16_t inet_length = htons(0);
+    send(client_socket, &inet_length, sizeof(inet_length), 0);
     alarm(25);
-    uint16_t keep_alive_message = htons(0);
-    send(client_socket, &keep_alive_message,2,0);
+
 }
 
 void * read_user_input(){
@@ -74,17 +75,17 @@ void * read_user_input(){
 }
 
 void handle_message(){
-    uint8_t username_length;
+    unsigned char username_length;
     uint16_t message_length;
-    read(client_socket, &username_length, 1);
-    char sender_username[username_length+1];
-    read(client_socket, &sender_username, username_length);
+    read(client_socket, &username_length, sizeof(unsigned char));
+    char * sender_username = malloc(username_length+1);
+    read(client_socket, sender_username, username_length);
     sender_username[username_length] = '\0';
 
     read(client_socket, &message_length, 2);
     
-    char received_message[message_length+1];
-    read(client_socket, &received_message, message_length);
+    char * received_message = malloc (message_length+1);
+    read(client_socket, received_message, message_length);
     received_message[message_length] = '\0';
 
     printf("%s: %s\n", sender_username, received_message);
@@ -150,10 +151,12 @@ void * handle_received_message(){
 }
 
 void * send_username(const char * username){
-    char message_to_send[256];
+    // char message_to_send[256];
     uint8_t username_length = strlen(username);
-    snprintf(message_to_send, sizeof message_to_send, "%c%s", username_length, username);
-    send(client_socket,message_to_send,username_length+1,0);//Shouldnt really be 256
+    // snprintf(message_to_send, sizeof message_to_send, "%c%s", username_length, username);
+    printf("sending username: %s\n", username); fflush(stdout);
+    send(client_socket, &username_length, sizeof(username_length), 0);
+    send(client_socket,username,username_length, 0);//Shouldnt really be 256
 }
 
 void close_client(int sig){
@@ -223,7 +226,8 @@ int main(int argc, char const *argv[]){
 
     check_connection();
     uint16_t number_of_connected_users;
-    read (client_socket, &number_of_connected_users, 2);
+    read (client_socket, &number_of_connected_users, sizeof(uint16_t));
+    number_of_connected_users = ntohs(number_of_connected_users);
     if (number_of_connected_users != 0){
         printf("There are already %d users connected!\n", number_of_connected_users);
     }
@@ -231,14 +235,14 @@ int main(int argc, char const *argv[]){
     
         // Now get the list of usernames 
     int counter = 0;
-    uint8_t username_length;
+    unsigned char username_length;
     for (counter; counter < number_of_connected_users; counter++){
 
         read(client_socket, &username_length, 1);
         printf("username_length: %c\n", username_length);
-        char * updated_username = malloc (username_length+1);
+        char * updated_username = malloc (username_length);
         read(client_socket, updated_username, username_length);
-        updated_username[username_length] = '\0';
+        updated_username[username_length-1] = '\0';
         printf("%s has joined the chat\n", updated_username);
         fflush(stdout);
 
@@ -256,11 +260,13 @@ int main(int argc, char const *argv[]){
     } else {
         printf("There is nobody here yet!\n"); fflush(stdout);
     }
+
+    alarm(25);
+
     send_username(username);
 
     pthread_create(&user_input, NULL, read_user_input, NULL);
 
     pthread_create(&received_message, NULL, handle_received_message, NULL);
-    alarm(25);
     while(1);
 }
