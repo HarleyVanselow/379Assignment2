@@ -31,10 +31,11 @@ void* Receive()
 			if(FD_ISSET(client_id,&copy_master)){
 
 				uint16_t message_length;
-				read(client_id, & message_length, 2);
+				size_received = read(client_id, & message_length, 2);
 				message_length = ntohs(message_length);
-
-				size_received = read(client_id,&buf,65535);
+				if(message_length != 0){
+					size_received = read(client_id,&buf,65535);
+				}
 				if(size_received < 1){
 					terminate(i);
 					break;

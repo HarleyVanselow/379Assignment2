@@ -66,12 +66,12 @@ void* Accept()
             }           
             write_buf[write_buf_itr++] = 0xCF;
             write_buf[write_buf_itr++] = 0xA7;
-            write_buf[write_buf_itr++] = client_count & 0xFF;
-            write_buf[write_buf_itr++] = client_count >> 8;
-            
+            unsigned short count_to_send = htons(client_count);
+            memcpy(&write_buf[write_buf_itr],&count_to_send,2);
+            write_buf_itr+=2;
             sem_wait(&lock_client);
                 for(i =0;i<client_count;i++){
-                        int name_length = strlen(clients[i].name);
+                    int name_length = strlen(clients[i].name);
                     write_buf[write_buf_itr++] = name_length;//length of the name
                     for(j=0;j<name_length;j++){
                         write_buf[write_buf_itr++] = clients[i].name[j];

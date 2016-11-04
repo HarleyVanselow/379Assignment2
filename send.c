@@ -15,8 +15,9 @@ void send_client_buffer(int i) //This method already has clients locked for it
 	for(j=0;j<sender_name_length;j++){ // Write client name to outgoing buffer
 		write_buf[write_buf_itr++] = clients[i].name[j];
 	}
-	write_buf[write_buf_itr++] = message_length & 0xFF;
-	write_buf[write_buf_itr++] = message_length >> 8;
+    unsigned short length_to_send = htons(message_length);
+	memcpy(&write_buf[write_buf_itr],&length_to_send,2);
+	write_buf_itr+=2;
 
 	
 	for(j=0;j<message_length;j++){
@@ -34,7 +35,7 @@ void send_client_change_notice(char* name, char joined_or_left) // Already clien
 	unsigned char write_buf[256];
 	int write_buf_itr=0;
 	int j;
-	char name_length = strlen(name);
+	unsigned char name_length = strlen(name);
 	write_buf[write_buf_itr++] = joined_or_left;
 	write_buf[write_buf_itr++] = name_length;
 	for(j=0;j<name_length;j++){

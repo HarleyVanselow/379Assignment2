@@ -3,7 +3,7 @@
 FILE *f;
 int MY_PORT;
 fd_set master;
-short client_count=0;
+unsigned short client_count=0;
 sem_t lock_client;
 sem_t lock_master;
 int server_exit = 0;

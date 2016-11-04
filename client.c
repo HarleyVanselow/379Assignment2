@@ -83,7 +83,7 @@ void handle_message(){
     sender_username[username_length] = '\0';
 
     read(client_socket, &message_length, 2);
-    
+    message_length = ntohs(message_length);
     char * received_message = malloc (message_length+1);
     read(client_socket, received_message, message_length);
     received_message[message_length] = '\0';
@@ -240,9 +240,9 @@ int main(int argc, char const *argv[]){
 
         read(client_socket, &username_length, 1);
         printf("username_length: %c\n", username_length);
-        char * updated_username = malloc (username_length);
+        char * updated_username = malloc (username_length+1); //Plus one for null terminator
         read(client_socket, updated_username, username_length);
-        updated_username[username_length-1] = '\0';
+        updated_username[username_length] = '\0';
         printf("%s has joined the chat\n", updated_username);
         fflush(stdout);
 

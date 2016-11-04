@@ -24,7 +24,7 @@ extern FILE *f;
 extern int MY_PORT;
 extern fd_set master;
 extern maxFD;
-extern short client_count;
+extern unsigned short client_count;
 extern sem_t lock_client;
 extern sem_t lock_master;
 extern int server_exit;
