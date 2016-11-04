@@ -33,6 +33,6 @@ void* Accept();
 void* Receive();
 void* Send();
 void* TimeoutCheck();
-void send_client_change_notice(char* name, int joined_or_left);
+void send_client_change_notice(char* name, char joined_or_left);
 void terminate(int client_number);
 void terminate_server();

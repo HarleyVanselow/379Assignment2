@@ -29,7 +29,7 @@ void send_client_buffer(int i) //This method already has clients locked for it
 
 	memset(clients[i].buf,0,256);
 }
-void send_client_change_notice(char* name,int joined_or_left) // Already client locked
+void send_client_change_notice(char* name, char joined_or_left) // Already client locked
 {
 	unsigned char write_buf[256];
 	int write_buf_itr=0;
