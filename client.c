@@ -53,12 +53,12 @@ void send_keep_alive_message(int sig){
 
 void * read_user_input(void * client_socket){
 
-    char message[255];
+    char message[256];
 
     while(1){
-        fgets(message, 255, stdin);
-        
-        if (strcmp(message, ".users\n") == 0){
+        fgets(message, 256, stdin);
+        message[strcspn(message, "\n")] = '\0';
+        if (strcmp(message, ".users\0") == 0){
             np = head.tqh_first;
             if (np != NULL){
                 printf("Current users: \n");
@@ -69,15 +69,13 @@ void * read_user_input(void * client_socket){
                 printf("There is nobody else here!\n");fflush(stdout);
             }
 
-        } else {
-            char message_to_send[256];
-            uint16_t message_length= strlen(message);
-            snprintf(message_to_send, sizeof message_to_send, "%c%c%s", message_length & 0xFF, (message_length >> 8) & 0xFF, message);
-
+        } else if (strlen(message) > 0){
+            uint16_t message_length= htons(strlen(message));
             alarm(25);
-            send(*((int *)client_socket),message_to_send,message_length+1,0);//Shouldnt really be 256
+            send(*((int *)client_socket),&message_length,sizeof(message_length),0);
+            send(*((int *)client_socket),message,message_length,0);//Shouldnt really be 256
 
-            memset(message_to_send,0,256);
+            memset(message,0,256);
         }
     }
 }
