@@ -64,11 +64,11 @@ void * read_user_input(){
             }
 
         } else if (strlen(message) > 0){
-            uint16_t message_length= htons(strlen(message));
+            uint16_t message_length =strlen(message);
+            uint16_t message_length_to_send= htons(strlen(message));
             alarm(25);
             send(client_socket,&message_length,sizeof(message_length),0);
             send(client_socket,message,message_length,0);//Shouldnt really be 256
-
             memset(message,0,256);
         }
     }
