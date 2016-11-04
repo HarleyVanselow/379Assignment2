@@ -109,26 +109,20 @@ void * received_messages(void * client_socket){
             fflush(stdout);
 
             entry * new_entry = (entry *)malloc(sizeof(struct entry));
-            // printf("5\n"); fflush(stdout);
             new_entry->username = updated_username;
-            // printf("6\n"); fflush(stdout);
-
             TAILQ_INSERT_TAIL(&head, new_entry, entries);
-            free(new_entry);
         } else if (message_type == 0x02) {
             read(*((int *)client_socket), &username_length, 1);
-            char * updated_username = malloc(username_length+1);
+            char updated_username[username_length + 1];// = malloc(username_length+1);
             read(*((int *)client_socket), updated_username, username_length);
             updated_username[username_length] = '\0';
             printf("%s has left the chat\n", updated_username);
             fflush(stdout);
+            entry * current_node;
             for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next){
-                // printf("%s\n", np->username);fflush(stdout);
-                printf("checking username: %s\n", np->username);
                 if (strcmp(np->username, updated_username) == 0){
-                    printf("removing node\n");
                     TAILQ_REMOVE(&head, np, entries);
-                    free(np);
+                    break;
                 }
             }
         }
@@ -245,14 +239,18 @@ int main(int argc, char const *argv[]){
             // printf("6\n"); fflush(stdout);
 
             TAILQ_INSERT_TAIL(&head, new_entry, entries);
-            free(new_entry);
-            printf("Adding username: %s\n", current_username); fflush(stdout);
-            printf("Adding username: %s\n", current_username); fflush(stdout);
+            // free(new_entry);
+            // printf("Adding username: %s\n", current_username); fflush(stdout);
+            // printf("Adding username: %s\n", current_username); fflush(stdout);
         } 
-        printf("Current users: \n"); fflush(stdout);
+        if (counter != 0){
+            printf("Current users: \n"); fflush(stdout);
 
- 		for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next){
-                printf("%s\n", np->username); fflush(stdout);
+            for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next){
+                    printf("%s\n", np->username); fflush(stdout);
+            }
+        } else {
+             printf("There is nobody here yet!\n"); fflush(stdout);
         }
         send_username(&client_socket, username);
 
